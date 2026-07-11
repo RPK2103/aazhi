@@ -1,5 +1,5 @@
 import { GoogleGenAI, type Part } from "@google/genai";
-import type { MarineContext } from "@/lib/types";
+import type { AazhiAssessment, MarineContext } from "@/lib/types";
 import { aazhiAssessmentSchema } from "@/lib/validation";
 
 export const GEMINI_MODEL = "gemini-3.1-flash-lite";
@@ -155,6 +155,47 @@ export class AssessmentGenerationError extends Error {
   }
 }
 
+export type AssessmentResponseParseResult =
+  | { success: true; data: AazhiAssessment }
+  | {
+      success: false;
+      stage: "GEMINI_PARSE";
+      error: unknown;
+    }
+  | {
+      success: false;
+      stage: "GEMINI_ZOD_VALIDATION";
+      issues: Array<{ path: string; message: string }>;
+      responseKeys: string[];
+    };
+
+export function parseAssessmentResponse(
+  responseText: string,
+): AssessmentResponseParseResult {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(responseText);
+  } catch (error) {
+    return { success: false, stage: "GEMINI_PARSE", error };
+  }
+
+  const validated = aazhiAssessmentSchema.safeParse(parsed);
+  if (!validated.success) {
+    return {
+      success: false,
+      stage: "GEMINI_ZOD_VALIDATION",
+      issues: validated.error.issues.map((issue) => ({
+        path: issue.path.join("."),
+        message: issue.message,
+      })),
+      responseKeys:
+        parsed && typeof parsed === "object" ? Object.keys(parsed) : [],
+    };
+  }
+
+  return { success: true, data: validated.data };
+}
+
 export async function generateAssessment(input: GenerateAssessmentInput) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -225,28 +266,20 @@ Trust boundaries: unavailable marine readings are unknown, not zero. Audio is fi
     throw new AssessmentGenerationError();
   }
 
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(responseText);
-  } catch (error) {
-    logGeminiFailure("GEMINI_PARSE", error);
+  const parsed = parseAssessmentResponse(responseText);
+  if (!parsed.success && parsed.stage === "GEMINI_PARSE") {
+    logGeminiFailure("GEMINI_PARSE", parsed.error);
     throw new AssessmentGenerationError();
   }
-
-  const validated = aazhiAssessmentSchema.safeParse(parsed);
-  if (!validated.success) {
+  if (!parsed.success) {
     console.error("[AAZHI_ASSESSMENT_FAILURE]", {
       stage: "GEMINI_ZOD_VALIDATION",
-      errorName: validated.error.name,
-      issues: validated.error.issues.map((issue) => ({
-        path: issue.path.join("."),
-        message: issue.message,
-      })),
-      responseKeys:
-        parsed && typeof parsed === "object" ? Object.keys(parsed) : [],
+      errorName: "ZodError",
+      issues: parsed.issues,
+      responseKeys: parsed.responseKeys,
     });
     throw new AssessmentGenerationError();
   }
 
-  return validated.data;
+  return parsed.data;
 }

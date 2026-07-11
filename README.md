@@ -270,11 +270,45 @@ Users must follow official maritime, weather, and local authority instructions.
 
 AAZHI uses **Vitest** with **V8 coverage**.
 
-The suite contains **52 automated tests across 3 test files**:
+The suite contains **78 automated tests across 5 test files**:
 
+- `src/app/api/assess/route.test.ts`
+- `src/lib/gemini.test.ts`
 - `src/lib/validation.test.ts`
 - `src/lib/locations.test.ts`
 - `src/lib/marine.test.ts`
+
+### Testing Strategy
+
+Tests exercise pure validation and normalization logic plus the API and Gemini
+boundaries. External Gemini and Open-Meteo boundaries are mocked, so the suite
+never consumes Gemini quota and never depends on provider availability. Manual
+Scenario A/B/C flows validate real end-to-end provider integration.
+
+### API Route Behavior
+
+Coverage includes:
+
+- Malformed multipart input and missing field observations
+- Invalid location, boat type, crew count, and trip duration
+- Unsupported and oversized image uploads
+- Valid text-only and optional-image requests
+- Marine provider failure handling
+- Gemini provider and malformed structured-output failure handling
+- Safe HTTP status and browser-facing error contracts
+
+### Gemini Structured-Output Boundary
+
+Coverage includes:
+
+- Valid structured assessments
+- Missing fields and invalid posture or urgency values
+- Malformed provider JSON
+- Empty blocker arrays
+- Tamil and Unicode preservation
+- One structured generation request
+- Optional audio and image inline-data parts
+- Missing-key and provider-failure handling
 
 ### Assessment Input Validation
 
@@ -341,17 +375,14 @@ Coverage includes:
 
 Current V8 coverage is approximately:
 
-- **75% lines**
-- **75.75% statements**
-- **76.74% branches**
-- **85.71% functions**
-
-Unit tests intentionally do not call Gemini or Open-Meteo live because provider
-calls create quota usage and external-network nondeterminism. Real provider
-behavior is validated through manual integration scenarios.
+- **88.65% lines**
+- **88.59% statements**
+- **81.55% branches**
+- **96% functions**
 
 ```bash
 npm test
+npm run test:run
 npm run test:coverage
 ```
 
@@ -487,7 +518,8 @@ src/
 ├─ app/
 │  ├─ api/
 │  │  └─ assess/
-│  │     └─ route.ts
+│  │     ├─ route.ts
+│  │     └─ route.test.ts
 │  ├─ globals.css
 │  ├─ layout.tsx
 │  └─ page.tsx
@@ -497,6 +529,7 @@ src/
 │  └─ marine-context-card.tsx
 └─ lib/
    ├─ gemini.ts
+   ├─ gemini.test.ts
    ├─ marine.ts
    ├─ validation.ts
    ├─ types.ts

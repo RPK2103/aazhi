@@ -14,6 +14,8 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json-summary"],
       include: [
+        "src/app/api/assess/route.ts",
+        "src/lib/gemini.ts",
         "src/lib/locations.ts",
         "src/lib/marine.ts",
         "src/lib/validation.ts",
