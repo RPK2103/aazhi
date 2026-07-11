@@ -1,0 +1,147 @@
+import { NextResponse } from "next/server";
+import { ZodError } from "zod";
+import { getLocation } from "@/lib/locations";
+import { fetchMarineContext, MarineContextError } from "@/lib/marine";
+import {
+  AssessmentGenerationError,
+  generateAssessment,
+} from "@/lib/gemini";
+import {
+  assessmentInputSchema,
+  AUDIO_MIME_TYPES,
+  IMAGE_MIME_TYPES,
+  MAX_AUDIO_BYTES,
+  MAX_IMAGE_BYTES,
+  normalizeMimeType,
+} from "@/lib/validation";
+
+export const runtime = "nodejs";
+
+class UploadError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
+function optionalFile(value: FormDataEntryValue | null) {
+  return value instanceof File && value.size > 0 ? value : undefined;
+}
+
+function validateUpload(
+  file: File | undefined,
+  kind: "audio" | "image",
+) {
+  if (!file) return undefined;
+
+  const normalizedMime = normalizeMimeType(file.type);
+  const allowed =
+    kind === "audio" ? AUDIO_MIME_TYPES : IMAGE_MIME_TYPES;
+  const maxBytes = kind === "audio" ? MAX_AUDIO_BYTES : MAX_IMAGE_BYTES;
+
+  if (!allowed.includes(normalizedMime as never)) {
+    throw new UploadError(`Unsupported ${kind} file type.`, 415);
+  }
+  if (file.size > maxBytes) {
+    throw new UploadError(
+      `${kind === "audio" ? "Audio" : "Image"} file is too large.`,
+      413,
+    );
+  }
+
+  return { file, mimeType: normalizedMime };
+}
+
+async function toInlineData(upload: ReturnType<typeof validateUpload>) {
+  if (!upload) return undefined;
+  const bytes = await upload.file.arrayBuffer();
+  return {
+    data: Buffer.from(bytes).toString("base64"),
+    mimeType: upload.mimeType,
+  };
+}
+
+export async function POST(request: Request) {
+  try {
+    const formData = await request.formData();
+    const input = assessmentInputSchema.parse({
+      location: formData.get("location"),
+      boatType: formData.get("boatType"),
+      crewCount: formData.get("crewCount"),
+      tripDuration: formData.get("tripDuration"),
+      language: formData.get("language"),
+      typedObservation: formData.get("typedObservation") ?? "",
+    });
+
+    const audio = validateUpload(optionalFile(formData.get("audio")), "audio");
+    const image = validateUpload(optionalFile(formData.get("image")), "image");
+
+    if (!input.typedObservation && !audio) {
+      return NextResponse.json(
+        { error: "Add a typed or spoken field observation." },
+        { status: 400 },
+      );
+    }
+
+    const location = getLocation(input.location);
+    if (!location) {
+      return NextResponse.json(
+        { error: "Select a supported coastal location." },
+        { status: 400 },
+      );
+    }
+
+    const marineContext = await fetchMarineContext(
+      location.latitude,
+      location.longitude,
+    );
+    const [audioInline, imageInline] = await Promise.all([
+      toInlineData(audio),
+      toInlineData(image),
+    ]);
+    const assessment = await generateAssessment({
+      locationName: location.name,
+      boatType: input.boatType,
+      crewCount: input.crewCount,
+      tripDuration: input.tripDuration,
+      language: input.language,
+      typedObservation: input.typedObservation,
+      marineContext,
+      audio: audioInline,
+      image: imageInline,
+    });
+
+    return NextResponse.json({ assessment, marineContext });
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        { error: "Check the form fields and try again." },
+        { status: 400 },
+      );
+    }
+    if (error instanceof UploadError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status },
+      );
+    }
+    if (error instanceof MarineContextError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 503 },
+      );
+    }
+    if (error instanceof AssessmentGenerationError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 502 },
+      );
+    }
+    return NextResponse.json(
+      { error: "The assessment could not be completed." },
+      { status: 500 },
+    );
+  }
+}
