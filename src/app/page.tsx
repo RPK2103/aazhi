@@ -4,22 +4,27 @@ export default function Home() {
   return (
     <main>
       <header className="brand-header">
-        <div className="brand-mark" aria-hidden="true">
-          ஆ
-        </div>
-        <div>
-          <p className="brand-name">AAZHI</p>
-          <p className="tagline">
-            See the sea. Speak your situation. Know your next move.
-          </p>
+        <div className="brand-lockup">
+          <div className="brand-mark" aria-hidden="true">
+            ஆ
+          </div>
+          <div>
+            <p className="brand-name">AAZHI</p>
+            <p className="operational-label">OPERATIONAL DECISION SUPPORT</p>
+          </div>
         </div>
       </header>
 
-      <div className="product-position">
-        <span>MARINE SYSTEMS FORECAST THE SEA</span>
-        <span aria-hidden="true">→</span>
-        <strong>AAZHI INTERPRETS THE DECISION AT THE SHORE</strong>
-      </div>
+      <section className="hero" aria-labelledby="hero-title">
+        <h1 id="hero-title">
+          See the sea. Speak your situation.
+          <span>Know your next move.</span>
+        </h1>
+        <p>
+          Marine systems forecast the sea. AAZHI interprets the decision at the
+          shore.
+        </p>
+      </section>
 
       <FisherIntake />
 

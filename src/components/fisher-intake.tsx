@@ -11,10 +11,8 @@ import { AssessmentResult } from "@/components/assessment-result";
 import { COASTAL_LOCATIONS } from "@/lib/locations";
 import { BOAT_TYPES, LANGUAGES, type AssessmentResponse } from "@/lib/types";
 import {
-  IMAGE_MIME_TYPES,
   MAX_AUDIO_BYTES,
-  MAX_IMAGE_BYTES,
-  normalizeMimeType,
+  validateUploadMetadata,
 } from "@/lib/validation";
 
 const RECORDING_LIMIT_SECONDS = 30;
@@ -49,6 +47,20 @@ export function FisherIntake() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const intakeRef = useRef<HTMLDivElement | null>(null);
+  const resultRef = useRef<HTMLElement | null>(null);
+
+  function scrollToElement(element: HTMLElement | null) {
+    if (!element) return;
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    element.scrollIntoView({
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+      block: "start",
+    });
+  }
 
   function clearRecordingTimers() {
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -84,6 +96,12 @@ export function FisherIntake() {
       if (imagePreview) URL.revokeObjectURL(imagePreview);
     };
   }, [imagePreview]);
+
+  useEffect(() => {
+    if (!result) return;
+    const frame = requestAnimationFrame(() => scrollToElement(resultRef.current));
+    return () => cancelAnimationFrame(frame);
+  }, [result]);
 
   async function startRecording() {
     setMicMessage("");
@@ -168,13 +186,13 @@ export function FisherIntake() {
     setError("");
     if (!file) return;
 
-    const mime = normalizeMimeType(file.type);
-    if (!IMAGE_MIME_TYPES.some((allowed) => allowed === mime)) {
+    const validation = validateUploadMetadata("image", file.type, file.size);
+    if (!validation.valid && validation.reason === "unsupported-type") {
       setError("Choose a JPEG, PNG, or WebP image.");
       event.target.value = "";
       return;
     }
-    if (file.size > MAX_IMAGE_BYTES) {
+    if (!validation.valid) {
       setError("Image must be 5 MB or smaller.");
       event.target.value = "";
       return;
@@ -227,7 +245,6 @@ export function FisherIntake() {
       }
 
       setResult(payload);
-      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (submissionError) {
       setError(
         submissionError instanceof Error
@@ -244,206 +261,301 @@ export function FisherIntake() {
     setTypedObservation("");
     removeAudio();
     removeImage();
+    formRef.current?.reset();
     setError("");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    requestAnimationFrame(() => scrollToElement(intakeRef.current));
   }
 
-  if (result) {
-    return <AssessmentResult result={result} onReset={resetAssessment} />;
-  }
+  const recordingAction = isRecording
+    ? "Stop recording"
+    : audioFile
+      ? "Re-record observation"
+      : "Start recording";
 
   return (
-    <form className="intake-form" onSubmit={handleSubmit}>
-      <section className="form-section">
-        <div className="section-heading">
-          <p className="eyebrow">FIELD OBSERVATION</p>
-          <h1>What are you seeing at sea today?</h1>
+    <>
+      <div ref={intakeRef} className="intake-workflow">
+        <div className="prompt-block">
+          <p className="eyebrow">PROMPT</p>
+          <h2 id="intake-title">What are you seeing at sea today?</h2>
         </div>
 
-        <div className="field">
-          <label htmlFor="location">Coastal location</label>
-          <select id="location" name="location" defaultValue="" required>
-            <option value="" disabled>
-              Select location
-            </option>
-            {COASTAL_LOCATIONS.map((location) => (
-              <option key={location.id} value={location.id}>
-                {location.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <form
+          ref={formRef}
+          className="intake-form"
+          aria-labelledby="intake-title"
+          onSubmit={handleSubmit}
+        >
+          <div className="intake-card-grid">
+            <section className="intake-card speak-card">
+              <header className="card-heading">
+                <p className="card-index">01 SPEAK</p>
+                <h3>Tell AAZHI what you&apos;re seeing</h3>
+              </header>
 
-        <div className="input-panel">
-          <div>
-            <p className="field-label">SPEAK</p>
-            <p className="field-help">
-              Describe local sea conditions and anything affecting boat, crew,
-              or communication readiness.
-            </p>
-          </div>
-          <div className="recording-controls">
-            {!isRecording ? (
-              <button
-                className="record-button"
-                type="button"
-                onClick={startRecording}
-              >
-                {audioFile ? "RE-RECORD" : "START RECORDING"}
-              </button>
-            ) : (
-              <button className="stop-button" type="button" onClick={stopRecording}>
-                STOP RECORDING
-              </button>
-            )}
-            {isRecording && (
-              <span className="recording-state" aria-live="polite">
-                Recording · {elapsedSeconds}s / {RECORDING_LIMIT_SECONDS}s
-              </span>
-            )}
-            {audioFile && !isRecording && (
-              <button className="text-button" type="button" onClick={removeAudio}>
-                Remove recording
-              </button>
-            )}
-          </div>
-          {micMessage && (
-            <p className="inline-message" role="status">
-              {micMessage}
-            </p>
-          )}
-        </div>
+              <div className="mic-stage">
+                <button
+                  className={`mic-button${isRecording ? " is-recording" : ""}`}
+                  type="button"
+                  aria-label={recordingAction}
+                  onClick={isRecording ? stopRecording : startRecording}
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    width="28"
+                    height="28"
+                    fill="none"
+                  >
+                    <path
+                      d="M12 15.5a3.5 3.5 0 0 0 3.5-3.5V6a3.5 3.5 0 1 0-7 0v6a3.5 3.5 0 0 0 3.5 3.5Z"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                    />
+                    <path
+                      d="M5.5 11.5v.5a6.5 6.5 0 0 0 13 0v-.5M12 18.5V22M9 22h6"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <span>{recordingAction.toUpperCase()}</span>
+                </button>
+                <p className="recording-state" aria-live="polite">
+                  {isRecording
+                    ? `Recording · ${elapsedSeconds}s / ${RECORDING_LIMIT_SECONDS}s`
+                    : audioFile
+                      ? "Spoken observation ready"
+                      : "Max 30 seconds"}
+                </p>
+                {audioFile && !isRecording && (
+                  <button
+                    className="text-button"
+                    type="button"
+                    onClick={removeAudio}
+                  >
+                    Remove recording
+                  </button>
+                )}
+              </div>
 
-        <div className="field">
-          <label htmlFor="typedObservation">Typed observation fallback</label>
-          <textarea
-            id="typedObservation"
-            name="typedObservation"
-            maxLength={1500}
-            rows={5}
-            value={typedObservation}
-            onChange={(event) => setTypedObservation(event.target.value)}
-            placeholder="Type what you see and any boat, crew, or communication concerns…"
-          />
-          <span className="character-count">
-            {typedObservation.length} / 1500
-          </span>
-        </div>
+              {micMessage && (
+                <p className="inline-message" role="status">
+                  {micMessage}
+                </p>
+              )}
 
-        <div className="input-panel">
-          <div>
-            <label className="field-label" htmlFor="image">
-              SHOW
-            </label>
-            <p className="field-help">
-              Optional visible context. AAZHI does not measure wave height from
-              images.
-            </p>
-          </div>
-          <input
-            ref={imageInputRef}
-            id="image"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={handleImage}
-          />
-          {imagePreview && (
-            <div className="image-preview">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={imagePreview} alt="Selected situational context preview" />
-              <button className="text-button" type="button" onClick={removeImage}>
-                Remove image
-              </button>
-            </div>
-          )}
-        </div>
-      </section>
+              <div className="card-divider">
+                <span>OR TYPE OBSERVATION</span>
+              </div>
+              <div className="field observation-field">
+                <label htmlFor="typedObservation">Typed observation</label>
+                <textarea
+                  id="typedObservation"
+                  name="typedObservation"
+                  maxLength={1500}
+                  rows={5}
+                  value={typedObservation}
+                  onChange={(event) => setTypedObservation(event.target.value)}
+                  placeholder="Describe what you are seeing, hearing, or noticing about the sea or vessel..."
+                />
+                <span className="character-count">
+                  {typedObservation.length} / 1500
+                </span>
+              </div>
+            </section>
 
-      <section className="form-section">
-        <div className="section-heading">
-          <p className="eyebrow">TRIP CONTEXT</p>
-          <h2>Readiness and exposure</h2>
-        </div>
-        <div className="field-grid">
-          <div className="field field-wide">
-            <label htmlFor="boatType">Boat type</label>
-            <select id="boatType" name="boatType" defaultValue="" required>
-              <option value="" disabled>
-                Select boat type
-              </option>
-              {BOAT_TYPES.map((boatType) => (
-                <option key={boatType} value={boatType}>
-                  {boatType}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label htmlFor="crewCount">Crew count</label>
-            <input
-              id="crewCount"
-              name="crewCount"
-              type="number"
-              min="1"
-              max="30"
-              step="1"
-              inputMode="numeric"
-              required
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="tripDuration">Planned trip duration (hours)</label>
-            <input
-              id="tripDuration"
-              name="tripDuration"
-              type="number"
-              min="0.5"
-              max="72"
-              step="0.5"
-              inputMode="decimal"
-              required
-            />
-          </div>
-          <fieldset className="language-field field-wide">
-            <legend>Output language</legend>
-            <div className="language-options">
-              {LANGUAGES.map((language) => (
-                <label key={language}>
-                  <input
-                    type="radio"
-                    name="language"
-                    value={language}
-                    defaultChecked={language === "English"}
-                  />
-                  <span>{language === "Tamil" ? "தமிழ்" : language}</span>
+            <section className="intake-card show-card">
+              <header className="card-heading">
+                <p className="card-index">02 SHOW</p>
+                <h3>Show what you&apos;re seeing</h3>
+              </header>
+
+              <div className="upload-shell">
+                <input
+                  ref={imageInputRef}
+                  id="image"
+                  className="upload-input"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  aria-describedby="image-boundary"
+                  onChange={handleImage}
+                />
+                <label className="upload-zone" htmlFor="image">
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    width="36"
+                    height="36"
+                    fill="none"
+                  >
+                    <path
+                      d="M4 7.5A1.5 1.5 0 0 1 5.5 6h3l1.2-1.5h4.6L15.5 6h3A1.5 1.5 0 0 1 20 7.5v10a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5v-10Z"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    />
+                    <circle
+                      cx="12"
+                      cy="12.5"
+                      r="3.5"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    />
+                  </svg>
+                  <strong>ADD VISIBLE CONTEXT</strong>
+                  <small>JPEG, PNG or WebP · max 5 MB</small>
                 </label>
-              ))}
-            </div>
-          </fieldset>
-        </div>
-      </section>
+              </div>
 
-      <div className="form-actions">
-        <p className="disclaimer">
-          AAZHI provides preparedness and readiness assistance, not official
-          maritime clearance. Follow local and maritime authority instructions.
-        </p>
-        <div aria-live="assertive">
-          {error && (
-            <p className="error-message" role="alert">
-              {error}
+              {imagePreview && (
+                <div className="image-preview">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imagePreview}
+                    alt="Selected situational context preview"
+                  />
+                  <div className="preview-actions">
+                    <span>{imageFile?.name}</span>
+                    <button
+                      className="text-button"
+                      type="button"
+                      onClick={removeImage}
+                    >
+                      Remove image
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <p id="image-boundary" className="context-boundary">
+                Visible context only — AAZHI does not measure wave height from
+                images.
+              </p>
+            </section>
+
+            <section className="intake-card trip-card">
+              <header className="card-heading">
+                <p className="card-index">03 TRIP</p>
+                <h3>Vessel &amp; trip context</h3>
+              </header>
+
+              <div className="trip-fields">
+                <div className="field trip-field-wide">
+                  <label htmlFor="location">Coastal location</label>
+                  <select id="location" name="location" defaultValue="" required>
+                    <option value="" disabled>
+                      Select location
+                    </option>
+                    {COASTAL_LOCATIONS.map((location) => (
+                      <option key={location.id} value={location.id}>
+                        {location.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="field trip-field-wide">
+                  <label htmlFor="boatType">Boat type</label>
+                  <select id="boatType" name="boatType" defaultValue="" required>
+                    <option value="" disabled>
+                      Select boat type
+                    </option>
+                    {BOAT_TYPES.map((boatType) => (
+                      <option key={boatType} value={boatType}>
+                        {boatType}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="field">
+                  <label htmlFor="crewCount">Crew count</label>
+                  <input
+                    id="crewCount"
+                    name="crewCount"
+                    type="number"
+                    min="1"
+                    max="30"
+                    step="1"
+                    inputMode="numeric"
+                    required
+                  />
+                </div>
+
+                <div className="field">
+                  <label htmlFor="tripDuration">Trip duration (hours)</label>
+                  <input
+                    id="tripDuration"
+                    name="tripDuration"
+                    type="number"
+                    min="0.5"
+                    max="72"
+                    step="0.5"
+                    inputMode="decimal"
+                    required
+                  />
+                </div>
+
+                <fieldset className="language-field trip-field-wide">
+                  <legend>Output language</legend>
+                  <div className="language-options">
+                    {LANGUAGES.map((language) => (
+                      <label key={language}>
+                        <input
+                          type="radio"
+                          name="language"
+                          value={language}
+                          defaultChecked={language === "English"}
+                        />
+                        <span>{language === "Tamil" ? "தமிழ்" : language}</span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+              </div>
+            </section>
+          </div>
+
+          <div className="form-actions">
+            <div aria-live="assertive">
+              {error && (
+                <p className="error-message" role="alert">
+                  {error}
+                </p>
+              )}
+            </div>
+            <button className="primary-button" type="submit" disabled={isLoading}>
+              {isLoading
+                ? "RECONCILING FIELD AND MARINE CONTEXT…"
+                : "ASSESS DEPARTURE READINESS"}
+            </button>
+            <p className="loading-status" aria-live="polite">
+              {isLoading ? "Reconciling field and marine context…" : ""}
             </p>
-          )}
-        </div>
-        <button className="primary-button" type="submit" disabled={isLoading}>
-          {isLoading
-            ? "RECONCILING FIELD AND MARINE CONTEXT…"
-            : "ASSESS DEPARTURE READINESS"}
-        </button>
-        <p className="loading-status" aria-live="polite">
-          {isLoading ? "Reconciling field and marine context…" : ""}
-        </p>
+            <p className="disclaimer">
+              AAZHI provides preparedness and readiness assistance, not official
+              maritime clearance. Follow local and maritime authority
+              instructions.
+            </p>
+          </div>
+        </form>
       </div>
-    </form>
+
+      <p className="sr-only" aria-live="polite">
+        {result ? "Assessment complete. Readiness brief follows." : ""}
+      </p>
+      {result && (
+        <section
+          ref={resultRef}
+          className="result-region"
+          aria-labelledby="result-region-title"
+        >
+          <h2 id="result-region-title" className="sr-only">
+            Departure readiness brief
+          </h2>
+          <AssessmentResult result={result} onReset={resetAssessment} />
+        </section>
+      )}
+    </>
   );
 }

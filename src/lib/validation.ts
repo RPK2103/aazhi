@@ -71,6 +71,38 @@ export const AUDIO_MIME_TYPES = [
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 export const MAX_AUDIO_BYTES = 8 * 1024 * 1024;
 
+export type UploadKind = "audio" | "image";
+
 export function normalizeMimeType(mimeType: string) {
   return mimeType.split(";")[0].trim().toLowerCase();
+}
+
+export function validateUploadMetadata(
+  kind: UploadKind,
+  mimeType: string,
+  size: number,
+):
+  | { valid: true; mimeType: string }
+  | { valid: false; reason: "unsupported-type" | "too-large" } {
+  const normalizedMime = normalizeMimeType(mimeType);
+  const allowedTypes = kind === "audio" ? AUDIO_MIME_TYPES : IMAGE_MIME_TYPES;
+  const maxBytes = kind === "audio" ? MAX_AUDIO_BYTES : MAX_IMAGE_BYTES;
+
+  if (!allowedTypes.some((allowed) => allowed === normalizedMime)) {
+    return { valid: false, reason: "unsupported-type" };
+  }
+  if (size > maxBytes) {
+    return { valid: false, reason: "too-large" };
+  }
+  return { valid: true, mimeType: normalizedMime };
+}
+
+export function hasFieldObservation({
+  typedObservation,
+  hasAudio,
+}: {
+  typedObservation: string;
+  hasAudio: boolean;
+}) {
+  return typedObservation.trim().length > 0 || hasAudio;
 }

@@ -8,11 +8,8 @@ import {
 } from "@/lib/gemini";
 import {
   assessmentInputSchema,
-  AUDIO_MIME_TYPES,
-  IMAGE_MIME_TYPES,
-  MAX_AUDIO_BYTES,
-  MAX_IMAGE_BYTES,
-  normalizeMimeType,
+  hasFieldObservation,
+  validateUploadMetadata,
 } from "@/lib/validation";
 
 export const runtime = "nodejs";
@@ -36,22 +33,18 @@ function validateUpload(
 ) {
   if (!file) return undefined;
 
-  const normalizedMime = normalizeMimeType(file.type);
-  const allowed =
-    kind === "audio" ? AUDIO_MIME_TYPES : IMAGE_MIME_TYPES;
-  const maxBytes = kind === "audio" ? MAX_AUDIO_BYTES : MAX_IMAGE_BYTES;
-
-  if (!allowed.includes(normalizedMime as never)) {
+  const validation = validateUploadMetadata(kind, file.type, file.size);
+  if (!validation.valid && validation.reason === "unsupported-type") {
     throw new UploadError(`Unsupported ${kind} file type.`, 415);
   }
-  if (file.size > maxBytes) {
+  if (!validation.valid) {
     throw new UploadError(
       `${kind === "audio" ? "Audio" : "Image"} file is too large.`,
       413,
     );
   }
 
-  return { file, mimeType: normalizedMime };
+  return { file, mimeType: validation.mimeType };
 }
 
 async function toInlineData(upload: ReturnType<typeof validateUpload>) {
@@ -78,7 +71,12 @@ export async function POST(request: Request) {
     const audio = validateUpload(optionalFile(formData.get("audio")), "audio");
     const image = validateUpload(optionalFile(formData.get("image")), "image");
 
-    if (!input.typedObservation && !audio) {
+    if (
+      !hasFieldObservation({
+        typedObservation: input.typedObservation,
+        hasAudio: Boolean(audio),
+      })
+    ) {
       return NextResponse.json(
         { error: "Add a typed or spoken field observation." },
         { status: 400 },

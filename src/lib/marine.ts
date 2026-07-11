@@ -9,7 +9,7 @@ const MARINE_FIELDS = [
 
 type MarineField = (typeof MARINE_FIELDS)[number];
 
-interface MarineApiResponse {
+export interface MarineApiResponse {
   current?: Partial<Record<MarineField, number | null>> & { time?: string };
   hourly?: Partial<Record<MarineField, Array<number | null>>> & {
     time?: string[];
@@ -27,7 +27,7 @@ function finiteOrNull(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
-function nearestHourlyIndex(times: string[], now: number) {
+export function findNearestMarineIndex(times: string[], now: number) {
   let bestIndex = -1;
   let bestDistance = Number.POSITIVE_INFINITY;
 
@@ -43,6 +43,38 @@ function nearestHourlyIndex(times: string[], now: number) {
   });
 
   return bestIndex;
+}
+
+export function normalizeMarineResponse(
+  data: MarineApiResponse,
+  now = Date.now(),
+): MarineContext {
+  const times = Array.isArray(data.hourly?.time) ? data.hourly.time : [];
+  const hourlyIndex = findNearestMarineIndex(times, now);
+
+  const valueFor = (field: MarineField) => {
+    const currentValue = finiteOrNull(data.current?.[field]);
+    if (currentValue !== null) return currentValue;
+    if (hourlyIndex < 0) return null;
+    return finiteOrNull(data.hourly?.[field]?.[hourlyIndex]);
+  };
+
+  const currentTime = data.current?.time;
+  const hourlyTime = hourlyIndex >= 0 ? times[hourlyIndex] : undefined;
+  const checkedAtCandidate = currentTime ?? hourlyTime;
+  const checkedAt =
+    checkedAtCandidate && !Number.isNaN(Date.parse(checkedAtCandidate))
+      ? new Date(checkedAtCandidate).toISOString()
+      : new Date(now).toISOString();
+
+  return {
+    waveHeight: valueFor("wave_height"),
+    wavePeriod: valueFor("wave_period"),
+    windWaveHeight: valueFor("wind_wave_height"),
+    swellWaveHeight: valueFor("swell_wave_height"),
+    checkedAt,
+    source: "Open-Meteo Marine Forecast",
+  };
 }
 
 export async function fetchMarineContext(
@@ -80,32 +112,7 @@ export async function fetchMarineContext(
     }
 
     const data = (await response.json()) as MarineApiResponse;
-    const times = Array.isArray(data.hourly?.time) ? data.hourly.time : [];
-    const hourlyIndex = nearestHourlyIndex(times, Date.now());
-
-    const valueFor = (field: MarineField) => {
-      const currentValue = finiteOrNull(data.current?.[field]);
-      if (currentValue !== null) return currentValue;
-      if (hourlyIndex < 0) return null;
-      return finiteOrNull(data.hourly?.[field]?.[hourlyIndex]);
-    };
-
-    const currentTime = data.current?.time;
-    const hourlyTime = hourlyIndex >= 0 ? times[hourlyIndex] : undefined;
-    const checkedAtCandidate = currentTime ?? hourlyTime;
-    const checkedAt =
-      checkedAtCandidate && !Number.isNaN(Date.parse(checkedAtCandidate))
-        ? new Date(checkedAtCandidate).toISOString()
-        : new Date().toISOString();
-
-    return {
-      waveHeight: valueFor("wave_height"),
-      wavePeriod: valueFor("wave_period"),
-      windWaveHeight: valueFor("wind_wave_height"),
-      swellWaveHeight: valueFor("swell_wave_height"),
-      checkedAt,
-      source: "Open-Meteo Marine Forecast",
-    };
+    return normalizeMarineResponse(data);
   } catch (error) {
     if (error instanceof MarineContextError) throw error;
     console.error("[AAZHI_ASSESSMENT_FAILURE]", {

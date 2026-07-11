@@ -2,7 +2,7 @@ import { GoogleGenAI, type Part } from "@google/genai";
 import type { MarineContext } from "@/lib/types";
 import { aazhiAssessmentSchema } from "@/lib/validation";
 
-export const GEMINI_MODEL = "gemini-3.5-flash";
+export const GEMINI_MODEL = "gemini-3.1-flash-lite";
 
 type DiagnosticStage =
   | "GEMINI_REQUEST"
