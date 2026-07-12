@@ -1,8 +1,19 @@
 import { z } from "zod";
 import { RISK_CONCEPTS } from "@/domain/risk";
+import { SAFETY_AUTHORITIES } from "@/domain/safety";
 import type { RiskInterpretation } from "./risk-interpreter-types";
 
 const interpretationText = z.string().trim().min(1).max(800);
+
+const groundingSourceSchema = z
+  .object({
+    recordId: z.string().trim().min(1),
+    authority: z.enum(SAFETY_AUTHORITIES),
+    documentTitle: z.string().trim().min(1),
+    sourceLocator: z.string().trim().min(1),
+    sourceUrl: z.string().trim().min(1),
+  })
+  .strict();
 
 export const riskInterpretationSchema = z
   .object({
@@ -13,6 +24,7 @@ export const riskInterpretationSchema = z
       .array(z.enum(RISK_CONCEPTS))
       .min(1)
       .max(RISK_CONCEPTS.length),
+    groundingSources: z.array(groundingSourceSchema),
   })
   .strict();
 
@@ -65,6 +77,7 @@ export const RISK_INTERPRETATION_JSON_SCHEMA = {
     "significance",
     "uncertainty",
     "relevantConcepts",
+    "groundingSources",
   ],
   properties: {
     interactionSummary: { type: "string", minLength: 1, maxLength: 800 },
@@ -75,6 +88,27 @@ export const RISK_INTERPRETATION_JSON_SCHEMA = {
       minItems: 1,
       maxItems: RISK_CONCEPTS.length,
       items: { type: "string", enum: [...RISK_CONCEPTS] },
+    },
+    groundingSources: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: [
+          "recordId",
+          "authority",
+          "documentTitle",
+          "sourceLocator",
+          "sourceUrl",
+        ],
+        properties: {
+          recordId: { type: "string", minLength: 1 },
+          authority: { type: "string", enum: [...SAFETY_AUTHORITIES] },
+          documentTitle: { type: "string", minLength: 1 },
+          sourceLocator: { type: "string", minLength: 1 },
+          sourceUrl: { type: "string", minLength: 1 },
+        },
+      },
     },
   },
 } as const;

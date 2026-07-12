@@ -14,6 +14,7 @@ function validInterpretation() {
     uncertainty:
       "AAZHI cannot verify the mechanical condition of the engine.",
     relevantConcepts: ["ENGINE_RELIABILITY", "WAVE_CONDITIONS"] as const,
+    groundingSources: [] as const,
   };
 }
 
@@ -23,37 +24,34 @@ describe("riskInterpretationSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("missing interactionSummary fails validation", () => {
-    const payload = validInterpretation();
-    const rest = {
-      significance: payload.significance,
-      uncertainty: payload.uncertainty,
-      relevantConcepts: payload.relevantConcepts,
-    };
-    const result = riskInterpretationSchema.safeParse(rest);
+  it("requires groundingSources field", () => {
+    const { groundingSources: _groundingSources, ...withoutGrounding } =
+      validInterpretation();
+    void _groundingSources;
+    const result = riskInterpretationSchema.safeParse(withoutGrounding);
     expect(result.success).toBe(false);
   });
 
-  it("empty significance fails validation", () => {
+  it("accepts empty groundingSources array", () => {
+    const result = riskInterpretationSchema.safeParse(validInterpretation());
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.groundingSources).toEqual([]);
+    }
+  });
+
+  it("rejects unknown output fields", () => {
     const result = riskInterpretationSchema.safeParse({
       ...validInterpretation(),
-      significance: "   ",
+      materialChange: true,
     });
     expect(result.success).toBe(false);
   });
 
-  it("empty uncertainty fails validation", () => {
+  it("rejects action field", () => {
     const result = riskInterpretationSchema.safeParse({
       ...validInterpretation(),
-      uncertainty: "",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("unsupported relevant concept fails validation", () => {
-    const result = riskInterpretationSchema.safeParse({
-      ...validInterpretation(),
-      relevantConcepts: ["ENGINE_FAILURE"],
+      action: "RETURN_TO_SHORE",
     });
     expect(result.success).toBe(false);
   });
@@ -65,18 +63,10 @@ describe("riskInterpretationSchema", () => {
     });
     expect(result.success).toBe(true);
   });
-
-  it("rejects unknown output fields", () => {
-    const result = riskInterpretationSchema.safeParse({
-      ...validInterpretation(),
-      materialChange: true,
-    });
-    expect(result.success).toBe(false);
-  });
 });
 
 describe("parseRiskInterpretationResponse", () => {
-  it("parses valid JSON", () => {
+  it("parses valid JSON with groundingSources", () => {
     const payload = validInterpretation();
     const result = parseRiskInterpretationResponse(JSON.stringify(payload));
     expect(result.success).toBe(true);

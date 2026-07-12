@@ -99,6 +99,7 @@ function evaluateScenarioInput(
       scenario.currentState,
       deltas,
       reassessment,
+      [],
     );
   } catch {
     return {

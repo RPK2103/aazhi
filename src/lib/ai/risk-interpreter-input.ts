@@ -5,6 +5,11 @@ import {
   type RiskDelta,
   type RiskState,
 } from "@/domain/risk";
+import {
+  deriveSafetyRetrievalConcepts,
+  retrieveSafetyContext,
+  type SafetyKnowledgeRecord,
+} from "@/domain/safety";
 import type { RiskInterpretationInput } from "./risk-interpreter-types";
 
 function copyRiskDelta(delta: RiskDelta): RiskDelta {
@@ -21,22 +26,51 @@ function copyReassessmentDecision(
   };
 }
 
+function copySafetyRecord(
+  record: SafetyKnowledgeRecord,
+): SafetyKnowledgeRecord {
+  return {
+    ...record,
+    riskConcepts: [...record.riskConcepts],
+  };
+}
+
+export interface BuildRiskInterpretationInputOptions {
+  retrievalLimit?: number;
+}
+
 /**
  * Pure deterministic builder: extracts interpreter input from current state,
- * pre-calculated deltas, and reassessment output. Does not compute new deltas.
+ * pre-calculated deltas, reassessment output, and injected safety knowledge.
+ * Does not compute new deltas.
  */
 export function buildRiskInterpretationInput(
   currentRiskState: RiskState,
   calculatedDeltas: readonly RiskDelta[],
   reassessmentDecision: ReassessmentEvaluation,
+  safetyKnowledge: readonly SafetyKnowledgeRecord[],
+  options?: BuildRiskInterpretationInputOptions,
 ): RiskInterpretationInput {
-  return {
+  const baseInput: RiskInterpretationInput = {
     tripContext: { ...currentRiskState.tripContext },
     activeConcerns: currentRiskState.activeConcerns
       .filter(isActiveConcern)
       .map((concern) => ({ ...concern })),
     calculatedDeltas: calculatedDeltas.map(copyRiskDelta),
     reassessmentDecision: copyReassessmentDecision(reassessmentDecision),
+    safetyContext: [],
+  };
+
+  const retrievalConcepts = deriveSafetyRetrievalConcepts(baseInput);
+  const retrievalResult = retrieveSafetyContext({
+    riskConcepts: retrievalConcepts,
+    knowledge: safetyKnowledge,
+    limit: options?.retrievalLimit,
+  });
+
+  return {
+    ...baseInput,
+    safetyContext: retrievalResult.records.map(copySafetyRecord),
   };
 }
 

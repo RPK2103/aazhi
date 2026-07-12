@@ -17,6 +17,8 @@ export default defineConfig({
         "src/app/api/assess/route.ts",
         "src/domain/risk/**/*.ts",
         "src/domain/policy/**/*.ts",
+        "src/domain/safety/**/*.ts",
+        "src/data/safety/**/*.ts",
         "src/evals/**/*.ts",
         "src/lib/ai/**/*.ts",
         "src/lib/gemini.ts",

@@ -46,6 +46,14 @@ export {
 } from "./policy";
 
 export {
+  evaluateRetrievalSuite,
+  type RetrievalScenarioChecks,
+  type RetrievalScenarioResult,
+  type RetrievalEvaluationMetrics,
+  type RetrievalSuiteEvaluation,
+} from "./retrieval";
+
+export {
   INITIAL_RISK_SCENARIOS,
   S001_STABLE_NO_CONCERNS,
   S002_STABLE_ENGINE_CONCERN,

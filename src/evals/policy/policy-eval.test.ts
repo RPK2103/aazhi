@@ -242,13 +242,16 @@ describe("policy Gemini independence", () => {
 });
 
 describe("RiskInterpretation output unchanged", () => {
-  it("retains exactly four explanation-only fields", () => {
+  it("retains explanation-only fields without action or materialChange", () => {
     const shape = riskInterpretationSchema.shape;
     expect(Object.keys(shape).sort()).toEqual([
+      "groundingSources",
       "interactionSummary",
       "relevantConcepts",
       "significance",
       "uncertainty",
     ]);
+    expect(shape).not.toHaveProperty("action");
+    expect(shape).not.toHaveProperty("materialChange");
   });
 });

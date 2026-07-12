@@ -5,6 +5,19 @@ import type {
   TripContext,
   VesselConcern,
 } from "@/domain/risk";
+import type { SafetyKnowledgeRecord } from "@/domain/safety";
+import type { SafetyAuthority } from "@/domain/safety";
+
+/**
+ * Reference to a retrieved safety knowledge record cited in interpretation output.
+ */
+export interface GroundingSourceReference {
+  recordId: string;
+  authority: SafetyAuthority;
+  documentTitle: string;
+  sourceLocator: string;
+  sourceUrl: string;
+}
 
 /**
  * Provider-independent input for the AAZHI Risk Interpreter.
@@ -15,6 +28,7 @@ export interface RiskInterpretationInput {
   activeConcerns: readonly VesselConcern[];
   calculatedDeltas: readonly RiskDelta[];
   reassessmentDecision: ReassessmentEvaluation;
+  safetyContext: readonly SafetyKnowledgeRecord[];
 }
 
 /**
@@ -26,4 +40,5 @@ export interface RiskInterpretation {
   significance: string;
   uncertainty: string;
   relevantConcepts: readonly RiskConcept[];
+  groundingSources: readonly GroundingSourceReference[];
 }

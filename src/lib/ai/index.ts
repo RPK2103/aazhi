@@ -1,6 +1,7 @@
 export type {
   RiskInterpretationInput,
   RiskInterpretation,
+  GroundingSourceReference,
 } from "./risk-interpreter-types";
 
 export {

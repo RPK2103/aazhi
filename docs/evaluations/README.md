@@ -104,6 +104,35 @@ Six deterministic candidate-validation fixtures (CASE 1–6) test valid acceptan
 | Action policy mismatch count | 2 |
 | Policy fallback correctness rate | 1 |
 
+## Safety Retrieval Evaluation
+
+Phase 6 evaluates deterministic safety context retrieval behaviour. Gemini is not invoked. No runtime web search occurs.
+
+Metrics are computed by `evaluateRetrievalSuite` in `src/evals/retrieval/`:
+
+| Metric | Definition |
+| --- | --- |
+| Retrieval eligibility count | Scenarios where `shouldInvokeRiskInterpreter` returns true |
+| Retrieval execution success rate | Percentage of eligible scenarios where deterministic retrieval executes successfully |
+| Requested concept preservation rate | Percentage where derived requested concepts match the deterministic concept derivation boundary |
+| Grounding coverage rate | Across unique requested concept occurrences in eligible scenarios: requested concepts with at least one retrieved matching record / total requested concepts |
+| Zero-result retrieval count | Eligible scenarios where no records are retrieved |
+| Provenance completeness rate | Percentage of retrieved records containing all required provenance fields |
+| Fabricated source acceptance count | Must be 0 (verified via controlled fake-provider tests) |
+
+**Important:** Grounding coverage rate measures coverage of the current curated corpus against synthetic scenario concepts. It is **not** a measure of maritime safety accuracy or legal completeness.
+
+Eligible scenarios: S003, S004, S008, S009 (same interpreter eligibility as Phase 4).
+
+### Phase 6.1 source applicability
+
+Phase 6.1 hardens source-to-record provenance and adds `applicabilityNote` to every seed record. Key semantics:
+
+- International guidance must not be generalized outside documented vessel or operational scope.
+- INCOIS Ocean State Forecast (`sk-incois-wave-context-001`) grounds marine parameter meaning for `WAVE_CONDITIONS`; it does **not** define AAZHI reassessment sensitivity or danger thresholds.
+- The ILO Work in Fishing Convention (C188) seed record was removed because the existing `SAFETY_EQUIPMENT` taxonomy collapses occupational safety, PPE, and vessel equipment into one concept without sufficient precision.
+- Corpus precision is preferred over authority diversity or record count.
+
 ## Initial Scenario Suite (S001–S015)
 
 | ID | One-line description |

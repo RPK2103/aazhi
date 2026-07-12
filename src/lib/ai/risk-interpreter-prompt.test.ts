@@ -3,29 +3,36 @@ import {
   calculateRiskDeltas,
   evaluateReassessmentNeed,
 } from "@/domain/risk";
+import { INITIAL_SAFETY_KNOWLEDGE } from "@/data/safety";
+import { S003_ENGINE_WAVE_DETERIORATION } from "@/evals";
 import { buildRiskState, STABLE_MARINE } from "@/evals/fixtures/risk-state-factory";
 import { buildRiskInterpretationInput } from "./risk-interpreter-input";
 import {
   buildRiskInterpreterPrompt,
   RISK_INTERPRETER_SYSTEM_INSTRUCTION,
+  serializeSafetyContextForPrompt,
 } from "./risk-interpreter-prompt";
 
 describe("buildRiskInterpreterPrompt", () => {
-  it("states interpreter boundaries in system instruction", () => {
+  it("states grounding rules in system instruction", () => {
     expect(RISK_INTERPRETER_SYSTEM_INSTRUCTION).toContain(
-      "You are the AAZHI Risk Interpreter.",
+      "RETRIEVED SAFETY CONTEXT RULES:",
     );
     expect(RISK_INTERPRETER_SYSTEM_INSTRUCTION).toContain(
-      "You do not determine whether reassessment is required.",
+      "Do not quote a CURATED_PARAPHRASE record as verbatim official text.",
     );
     expect(RISK_INTERPRETER_SYSTEM_INSTRUCTION).toContain(
-      "Reassessment sensitivity is not a maritime danger threshold.",
+      "Respect each record's applicabilityNote when present.",
     );
-    expect(RISK_INTERPRETER_SYSTEM_INSTRUCTION).toContain("0.5 m wave change");
-    expect(RISK_INTERPRETER_SYSTEM_INSTRUCTION).toContain("10 km/h wind change");
+    expect(RISK_INTERPRETER_SYSTEM_INSTRUCTION).toContain(
+      "Do not generalize safety context beyond its documented vessel or operational scope.",
+    );
+    expect(RISK_INTERPRETER_SYSTEM_INSTRUCTION).toContain(
+      "no curated safety context was retrieved",
+    );
   });
 
-  it("separates trip context, concerns, deltas, and reassessment sections", () => {
+  it("separates trip context, concerns, deltas, reassessment, and safety context", () => {
     const input = buildRiskInterpretationInput(
       buildRiskState({
         marineState: STABLE_MARINE,
@@ -39,6 +46,7 @@ describe("buildRiskInterpreterPrompt", () => {
         reason: "NO_MATERIAL_CHANGE",
         triggerConcepts: [],
       },
+      [],
     );
 
     const prompt = buildRiskInterpreterPrompt(input);
@@ -46,31 +54,60 @@ describe("buildRiskInterpreterPrompt", () => {
     expect(prompt).toContain("ACTIVE CONCERNS:");
     expect(prompt).toContain("CALCULATED DELTAS:");
     expect(prompt).toContain("DETERMINISTIC REASSESSMENT DECISION:");
-    expect(prompt).not.toContain("previousState");
-    expect(prompt).not.toContain("currentState");
+    expect(prompt).toContain("RETRIEVED SAFETY CONTEXT:");
   });
 
-  it("includes structured delta values with signedChange when numeric", () => {
-    const previous = buildRiskState({
-      marineState: { ...STABLE_MARINE, waveHeightM: 0.8, windSpeedKmh: 13 },
-      activeConcerns: [],
-      lastEvaluatedAt: "2026-07-12T06:00:00.000Z",
-      version: 1,
-    });
-    const current = buildRiskState({
-      marineState: { ...STABLE_MARINE, waveHeightM: 1.5, windSpeedKmh: 18 },
-      activeConcerns: [],
-      lastEvaluatedAt: "2026-07-12T07:00:00.000Z",
-      version: 2,
-    });
-    const deltas = calculateRiskDeltas(previous, current);
-    const decision = evaluateReassessmentNeed(deltas, current.activeConcerns);
-    const input = buildRiskInterpretationInput(current, deltas, decision);
+  it("includes provenance metadata for retrieved records", () => {
+    const deltas = calculateRiskDeltas(
+      S003_ENGINE_WAVE_DETERIORATION.previousState,
+      S003_ENGINE_WAVE_DETERIORATION.currentState,
+    );
+    const decision = evaluateReassessmentNeed(
+      deltas,
+      S003_ENGINE_WAVE_DETERIORATION.currentState.activeConcerns,
+    );
+    const input = buildRiskInterpretationInput(
+      S003_ENGINE_WAVE_DETERIORATION.currentState,
+      deltas,
+      decision,
+      INITIAL_SAFETY_KNOWLEDGE,
+    );
     const prompt = buildRiskInterpreterPrompt(input);
 
-    expect(prompt).toContain('"signedChange": 0.7');
-    expect(prompt).toContain('"signedChange": 5');
-    expect(prompt).toContain('"reassessmentRelevant": true');
-    expect(prompt).toContain('"reassessmentRelevant": false');
+    expect(input.safetyContext.length).toBeGreaterThan(0);
+    expect(prompt).toContain("recordId");
+    expect(prompt).toContain("contentRepresentation");
+    expect(prompt).toContain("curatedContent");
+    expect(prompt).toContain("sourceLocator");
+    expect(prompt).toContain("applicabilityNote");
+  });
+
+  it("serializes applicabilityNote into the Risk Interpreter prompt", () => {
+    const deltas = calculateRiskDeltas(
+      S003_ENGINE_WAVE_DETERIORATION.previousState,
+      S003_ENGINE_WAVE_DETERIORATION.currentState,
+    );
+    const decision = evaluateReassessmentNeed(
+      deltas,
+      S003_ENGINE_WAVE_DETERIORATION.currentState.activeConcerns,
+    );
+    const input = buildRiskInterpretationInput(
+      S003_ENGINE_WAVE_DETERIORATION.currentState,
+      deltas,
+      decision,
+      INITIAL_SAFETY_KNOWLEDGE,
+    );
+    const prompt = buildRiskInterpreterPrompt(input);
+    const waveRecord = input.safetyContext.find(
+      (record) => record.id === "sk-incois-wave-context-001",
+    );
+    expect(waveRecord?.applicabilityNote).toBeTruthy();
+    expect(prompt).toContain(waveRecord!.applicabilityNote!);
+  });
+
+  it("represents empty safety context explicitly", () => {
+    expect(serializeSafetyContextForPrompt([])).toContain(
+      "No curated safety context records were retrieved",
+    );
   });
 });

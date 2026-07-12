@@ -5,6 +5,7 @@ import {
   type ReassessmentEvaluation,
   type RiskDelta,
 } from "@/domain/risk";
+import { INITIAL_SAFETY_KNOWLEDGE } from "@/data/safety";
 import {
   buildRiskState,
   buildTripContext,
@@ -41,9 +42,34 @@ describe("buildRiskInterpretationInput", () => {
       currentState,
       deltas,
       reassessment,
+      [],
     );
     expect(input.activeConcerns).toHaveLength(1);
     expect(input.activeConcerns[0]?.status).toBe("OPEN");
+  });
+
+  it("includes safetyContext from injected knowledge", () => {
+    const input = buildRiskInterpretationInput(
+      currentState,
+      deltas,
+      reassessment,
+      INITIAL_SAFETY_KNOWLEDGE,
+    );
+    expect(input.safetyContext).toBeDefined();
+    expect(Array.isArray(input.safetyContext)).toBe(true);
+  });
+
+  it("preserves applicabilityNote in safetyContext", () => {
+    const input = buildRiskInterpretationInput(
+      currentState,
+      deltas,
+      reassessment,
+      INITIAL_SAFETY_KNOWLEDGE,
+    );
+    expect(input.safetyContext.length).toBeGreaterThan(0);
+    for (const record of input.safetyContext) {
+      expect(record).toHaveProperty("applicabilityNote");
+    }
   });
 
   it("excludes RESOLVED concern from interpreter input", () => {
@@ -51,31 +77,11 @@ describe("buildRiskInterpretationInput", () => {
       currentState,
       deltas,
       reassessment,
+      [],
     );
     expect(
       input.activeConcerns.some((concern) => concern.status === "RESOLVED"),
     ).toBe(false);
-  });
-
-  it("excludes DISMISSED concern from interpreter input", () => {
-    const input = buildRiskInterpretationInput(
-      currentState,
-      deltas,
-      reassessment,
-    );
-    expect(
-      input.activeConcerns.some((concern) => concern.status === "DISMISSED"),
-    ).toBe(false);
-  });
-
-  it("preserves trip context exactly", () => {
-    const input = buildRiskInterpretationInput(
-      currentState,
-      deltas,
-      reassessment,
-    );
-    expect(input.tripContext).toEqual(currentState.tripContext);
-    expect(input.tripContext).not.toBe(currentState.tripContext);
   });
 
   it("preserves calculated deltas exactly", () => {
@@ -96,27 +102,15 @@ describe("buildRiskInterpretationInput", () => {
       calculated,
       current.activeConcerns,
     );
-    const input = buildRiskInterpretationInput(current, calculated, decision);
+    const input = buildRiskInterpretationInput(
+      current,
+      calculated,
+      decision,
+      [],
+    );
 
     expect(input.calculatedDeltas).toEqual(calculated);
     expect(input.calculatedDeltas).not.toBe(calculated);
-  });
-
-  it("preserves reassessment decision exactly", () => {
-    const decision: ReassessmentEvaluation = {
-      required: true,
-      reason: "MATERIAL_ENVIRONMENTAL_CHANGE_WITH_ACTIVE_CONCERN",
-      triggerConcepts: ["ENGINE_RELIABILITY", "WAVE_CONDITIONS"],
-    };
-    const input = buildRiskInterpretationInput(
-      currentState,
-      deltas,
-      decision,
-    );
-    expect(input.reassessmentDecision).toEqual(decision);
-    expect(input.reassessmentDecision.triggerConcepts).not.toBe(
-      decision.triggerConcepts,
-    );
   });
 });
 

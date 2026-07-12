@@ -832,6 +832,96 @@ All 15 scenarios declare `expectedOperationalAction`. Phase 5 policy is **not** 
 
 ---
 
+## Phase 6 Grounded Safety Context Retrieval
+
+Phase 6 adds a small, traceable, provider-independent curated safety context retrieval layer under `src/domain/safety/` and `src/data/safety/`. Retrieval grounds the Risk Interpreter without changing operational policy or the legacy assessment route.
+
+Architecture preserved:
+
+**DETERMINISTIC SYSTEMS DETECT → CURATED RETRIEVAL GROUNDS → AI INTERPRETS → DETERMINISTIC POLICY CONTROLS OPERATIONAL ACTION**
+
+### Curated retrieval purpose
+
+Supply authoritative safety context to the Risk Interpreter using exact `RiskConcept` mapping. Gemini explains interactions using retrieved context only — it does not generate source material, derive operational actions, or fill grounding gaps from general model knowledge.
+
+### Authoritative-source allowlist
+
+Bounded `SafetyAuthority` values: `FAO`, `IMO`, `ILO`, `FAO_ILO_IMO`, `INCOIS`, `INDIA_FISHERIES_AUTHORITY`. No blogs, SEO sites, Reddit, Wikipedia, commercial marketing, or LLM-generated guidance.
+
+### Exact RiskConcept retrieval (no embeddings)
+
+Retrieval V1 uses exact concept intersection only. No vector database, embeddings, semantic search, tokenization, or runtime web search. Unknown grounding is preferred over invented grounding.
+
+### Provenance model
+
+Each `SafetyKnowledgeRecord` preserves: `id`, `authority`, `documentTitle`, `jurisdiction`, `section`, `riskConcepts`, `content`, `contentRepresentation`, `sourceUrl`, `sourceLocator`, `version`, `effectiveDate`, `retrievalPriority`, `applicabilityNote`.
+
+### Source applicability (Phase 6.1)
+
+`applicabilityNote` is first-class metadata documenting the vessel or operational scope of each curated record. International guidance must not be generalized outside this documented scope. The Risk Interpreter serializes `applicabilityNote` in safety-context prompt sections and instructs the model to respect it.
+
+Corpus precision is preferred over authority diversity or record count. Records with imprecise concept mapping or weak source-to-record alignment are removed rather than retained for coverage statistics.
+
+### CURATED_PARAPHRASE semantics
+
+Phase 6 seed records use `CURATED_PARAPHRASE` only — conservative factual paraphrases, not verbatim official quotations. `VERBATIM_EXCERPT` exists in the vocabulary but is not used unless exact source text is manually verified.
+
+### Grounded and ungrounded concepts
+
+`SafetyRetrievalResult` exposes `requestedConcepts`, `records`, `groundedConcepts`, and `ungroundedConcepts`. Concepts without a matching corpus record remain explicitly ungrounded.
+
+### Empty retrieval behaviour
+
+When no record matches, retrieval returns `[]`. No fallback safety advice is generated. The interpreter prompt and system instruction require explicit acknowledgement when `safetyContext` is empty.
+
+### Grounding source validation
+
+`RiskInterpretation.groundingSources` references retrieved records. After schema validation, `interpretRiskChange` verifies every `recordId` and provenance field matches the supplied input `safetyContext`. Fabricated metadata fails closed.
+
+### S003 retrieval result (revised Phase 6.1 corpus)
+
+| Check | Result |
+| --- | --- |
+| Requested concepts | `ENGINE_RELIABILITY`, `WAVE_CONDITIONS` |
+| Grounded concepts | `ENGINE_RELIABILITY`, `WAVE_CONDITIONS` |
+| Ungrounded concepts | (none for S003 requested set) |
+| Retrieved record count | ≥ 2 (engine + INCOIS wave context) |
+| INCOIS wave context | Grounds marine parameter meaning, not AAZHI sensitivity thresholds |
+| WIND_CONDITIONS from non-relevant wind delta | Not requested |
+
+### Phase 6.1 corpus precision corrections
+
+| Change | Reason |
+| --- | --- |
+| Added `applicabilityNote` to all seed records | Source applicability is first-class metadata |
+| Replaced IMO overview radio record | Primary communication grounded from FAO/ILO/IMO Safety Recommendations (Chapter 9) |
+| Corrected FAO communication redundancy provenance | Official Fishing Safety communication resource; no universal second-radio mandate implied |
+| Corrected safety equipment source | FAO *Safety at sea for small-scale fishers* (Open Knowledge Repository) |
+| Replaced INCOIS PRIMARY_COMMUNICATION record with `sk-incois-wave-context-001` | INCOIS OSF grounds `WAVE_CONDITIONS` parameter meaning only |
+| Removed ILO C188 seed record | `SAFETY_EQUIPMENT` taxonomy does not represent occupational/PPE concepts precisely enough |
+
+### Current corpus limitations
+
+The revised 7-record MVP corpus (`INITIAL_SAFETY_KNOWLEDGE`) demonstrates architecture evaluation only. It does not cover all `RiskConcept` values and does not establish jurisdiction-specific legal requirements.
+
+### Product route isolation
+
+Phase 6 retrieval remains disconnected from `POST /api/assess`, `src/lib/gemini.ts`, and the UI.
+
+### Phase 6 retrieval metrics (initial 15-scenario suite)
+
+| Metric | Value |
+| --- | --- |
+| Retrieval eligibility count | 4 |
+| Retrieval execution success rate | 1 |
+| Requested concept preservation rate | 1 |
+| Grounding coverage rate | Derived from corpus coverage |
+| Zero-result retrieval count | Derived |
+| Provenance completeness rate | 1 |
+| Fabricated source acceptance count | 0 |
+
+---
+
 ## Phase 1 Readiness
 
 **READY** (Phase 0 complete; Phase 1 domain foundation landed on this branch)
