@@ -32,5 +32,6 @@ export const S002_STABLE_ENGINE_CONCERN: RiskScenario = {
     expectedReassessmentReason: "NO_MATERIAL_CHANGE",
     expectedTriggerConcepts: [],
     expectedActiveConcernConcepts: ["ENGINE_RELIABILITY"],
+    expectedOperationalAction: "NO_ACTION_REQUIRED",
   },
 };

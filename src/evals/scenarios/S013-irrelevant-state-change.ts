@@ -30,5 +30,6 @@ export const S013_IRRELEVANT_STATE_CHANGE: RiskScenario = {
     expectedReassessmentRequired: false,
     expectedReassessmentReason: "NO_MATERIAL_CHANGE",
     expectedTriggerConcepts: [],
+    expectedOperationalAction: "NO_ACTION_REQUIRED",
   },
 };

@@ -47,5 +47,6 @@ export const S004_WAVE_CHANGE_NO_CONCERN: RiskScenario = {
         reassessmentRelevant: false,
       },
     ],
+    expectedOperationalAction: "REASSESSMENT_REQUIRED",
   },
 };

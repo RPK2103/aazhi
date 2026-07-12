@@ -31,6 +31,21 @@ export {
 } from "./ai";
 
 export {
+  evaluateOperationalPolicy,
+  evaluateOperationalPolicySuite,
+  evaluatePolicyValidationCase,
+  computePolicyMetrics,
+  POLICY_EVAL_DERIVED_AT,
+  POLICY_VALIDATION_CASES,
+  type PolicyEvaluationCheck,
+  type ScenarioPolicyEvaluationResult,
+  type PolicyValidationCase,
+  type PolicyValidationCaseResult,
+  type PolicyEvaluationMetrics,
+  type PolicySuiteEvaluation,
+} from "./policy";
+
+export {
   INITIAL_RISK_SCENARIOS,
   S001_STABLE_NO_CONCERNS,
   S002_STABLE_ENGINE_CONCERN,

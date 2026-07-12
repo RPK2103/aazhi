@@ -33,5 +33,6 @@ export const S014_OFFICIAL_ALERT_PLACEHOLDER: RiskScenario = {
     expectedReassessmentRequired: false,
     expectedReassessmentReason: "NO_MATERIAL_CHANGE",
     expectedTriggerConcepts: [],
+    expectedOperationalAction: "NO_ACTION_REQUIRED",
   },
 };

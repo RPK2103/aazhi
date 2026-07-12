@@ -33,5 +33,6 @@ export const S011_MISSED_CHECK_IN: RiskScenario = {
     expectedReassessmentRequired: false,
     expectedReassessmentReason: "NO_MATERIAL_CHANGE",
     expectedTriggerConcepts: [],
+    expectedOperationalAction: "NO_ACTION_REQUIRED",
   },
 };

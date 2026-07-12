@@ -55,5 +55,6 @@ export const S003_ENGINE_WAVE_DETERIORATION: RiskScenario = {
         reassessmentRelevant: false,
       },
     ],
+    expectedOperationalAction: "COORDINATOR_REVIEW_REQUIRED",
   },
 };

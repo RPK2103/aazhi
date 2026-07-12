@@ -35,5 +35,6 @@ export const S009_RESOLUTION_REPORTED: RiskScenario = {
     expectedReassessmentReason: "CONCERN_STATE_CHANGED",
     expectedTriggerConcepts: ["ENGINE_RELIABILITY"],
     expectedActiveConcernConcepts: ["ENGINE_RELIABILITY"],
+    expectedOperationalAction: "REASSESSMENT_REQUIRED",
   },
 };

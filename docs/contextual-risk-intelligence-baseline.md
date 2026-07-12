@@ -750,6 +750,88 @@ Eligible scenarios: S003, S004, S008, S009.
 
 ---
 
+## Phase 5 Bounded Operational Policy
+
+Phase 5 adds a bounded deterministic operational policy under `src/domain/policy/`. The policy controls **AAZHI workflow attention state** — not navigation, vessel seaworthiness, or maritime clearance.
+
+Architecture preserved:
+
+**DETERMINISTIC SYSTEMS DETECT → AI INTERPRETS → DETERMINISTIC POLICY CONTROLS OPERATIONAL ACTION**
+
+The Risk Interpreter (Phase 4) remains explanation-only. Policy does not parse `interactionSummary`, `significance`, or `uncertainty`. Gemini is not required to derive policy actions.
+
+### Policy domain boundary
+
+| File | Responsibility |
+| --- | --- |
+| `operational-actions.ts` | Bounded `OPERATIONAL_ACTIONS` vocabulary + semantics |
+| `policy-types.ts` | `OperationalPolicyDecision`, `PolicyViolationType`, validation result types |
+| `action-policy.ts` | `REASSESSMENT_TO_OPERATIONAL_ACTION` mapping + `deriveOperationalPolicyDecision` |
+| `policy-validator.ts` | `validateOperationalActionCandidate` — rejects unsupported/mismatched candidates |
+| `index.ts` | Public barrel export (`@/domain/policy`) |
+
+### Four bounded operational actions
+
+Workflow attention states only — not maritime commands:
+
+| Action | Meaning |
+| --- | --- |
+| `NO_ACTION_REQUIRED` | No new represented deterministic risk-state change requires workflow action (does not mean vessel/trip/conditions are safe) |
+| `REASSESSMENT_REQUIRED` | Represented state change requires operational context reconsideration |
+| `COORDINATOR_REVIEW_REQUIRED` | Environmental change interacting with active concern context requires human coordinator attention |
+| `OFFICIAL_ALERT_PRIORITY` | Authoritative alert state requires highest workflow priority (alert state not yet modelled in RiskState) |
+
+Unsupported free-form actions (e.g. `RETURN_TO_SHORE`, `CONTINUE_TRIP`, `VESSEL_SAFE`) are rejected.
+
+### Reassessment-to-action mapping
+
+Single deterministic source (`REASSESSMENT_TO_OPERATIONAL_ACTION`):
+
+| Reassessment reason | Operational action |
+| --- | --- |
+| `NO_MATERIAL_CHANGE` | `NO_ACTION_REQUIRED` |
+| `MATERIAL_ENVIRONMENTAL_CHANGE` | `REASSESSMENT_REQUIRED` |
+| `MATERIAL_ENVIRONMENTAL_CHANGE_WITH_ACTIVE_CONCERN` | `COORDINATOR_REVIEW_REQUIRED` |
+| `CONCERN_STATE_CHANGED` | `REASSESSMENT_REQUIRED` |
+| `OFFICIAL_ALERT_CHANGED` | `OFFICIAL_ALERT_PRIORITY` |
+
+### Policy validation
+
+`validateOperationalActionCandidate` validates externally supplied action candidates:
+
+- `UNSUPPORTED_ACTION` — candidate is not a bounded operational action
+- `ACTION_POLICY_MISMATCH` — supported candidate does not match deterministic expected action
+- Deterministic expected action is always returned as `fallbackAction`
+
+### S003 policy result
+
+| Check | Result |
+| --- | --- |
+| Reassessment reason | `MATERIAL_ENVIRONMENTAL_CHANGE_WITH_ACTIVE_CONCERN` |
+| Policy action | `COORDINATOR_REVIEW_REQUIRED` |
+| Trigger concepts | `ENGINE_RELIABILITY`, `WAVE_CONDITIONS` |
+| Gemini | Not invoked |
+| RiskInterpretation | Not required |
+
+### Policy evaluation harness
+
+`src/evals/policy/` evaluates scenarios through:
+
+`calculateRiskDeltas` → `evaluateReassessmentNeed` → `deriveOperationalPolicyDecision`
+
+All 15 scenarios declare `expectedOperationalAction`. Phase 5 policy is **not** connected to `POST /api/assess`.
+
+### Phase 5 policy metrics (initial 15-scenario suite)
+
+| Metric | Value |
+| --- | --- |
+| Policy action exact-match rate | 1 |
+| Unsupported action rejection count | 1 (synthetic validation fixtures) |
+| Action policy mismatch count | 2 (synthetic validation fixtures) |
+| Policy fallback correctness rate | 1 |
+
+---
+
 ## Phase 1 Readiness
 
 **READY** (Phase 0 complete; Phase 1 domain foundation landed on this branch)

@@ -37,5 +37,6 @@ export const S012_MISSED_CHECK_IN_COMMS_CONCERN: RiskScenario = {
     expectedReassessmentReason: "NO_MATERIAL_CHANGE",
     expectedTriggerConcepts: [],
     expectedActiveConcernConcepts: ["COMMUNICATION_REDUNDANCY"],
+    expectedOperationalAction: "NO_ACTION_REQUIRED",
   },
 };

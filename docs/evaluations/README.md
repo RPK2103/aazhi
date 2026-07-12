@@ -69,6 +69,41 @@ Metrics are computed by `evaluateInterpreterBoundary` in `src/evals/ai/`:
 
 Eligible scenarios: S003, S004, S008, S009.
 
+## Operational Policy Evaluation
+
+Phase 5 evaluates deterministic operational policy behaviour. Gemini is not invoked. Policy does not use AI natural-language fields.
+
+Metrics are computed by `evaluateOperationalPolicySuite` in `src/evals/policy/`:
+
+| Metric | Definition |
+| --- | --- |
+| Policy action exact-match rate | Fraction of scenarios where deterministic policy action matches `expectedOperationalAction` |
+| Policy violation rate | Fraction of synthetic candidate-validation fixtures rejected by policy validator |
+| Unsupported action rejection count | Candidates rejected with `UNSUPPORTED_ACTION` |
+| Action policy mismatch count | Supported candidates rejected with `ACTION_POLICY_MISMATCH` |
+| Policy fallback correctness rate | Fraction of invalid validation cases where `fallbackAction` equals deterministic expected action |
+
+### Synthetic validation cases
+
+Six deterministic candidate-validation fixtures (CASE 1–6) test valid acceptance, unsupported rejection, and policy mismatch detection. Candidates are synthetic — not Gemini output.
+
+### Capability-gap scenario semantics
+
+`NO_ACTION_REQUIRED` means no action is required by **current represented AAZHI state-change logic**. It does **not** mean the vessel, trip, or environmental conditions are safe.
+
+- S011 and S012 remain `NO_ACTION_REQUIRED` under current semantics (`CHECK_IN_EVENT_NOT_YET_MODELLED`).
+- S014 remains `NO_ACTION_REQUIRED` (`OFFICIAL_ALERT_STATE_NOT_YET_MODELLED` — do not fabricate `OFFICIAL_ALERT_PRIORITY`).
+
+### Phase 5 calculated results (initial 15-scenario suite)
+
+| Metric | Value |
+| --- | --- |
+| Policy action exact-match rate | 1 |
+| Policy violation rate | 0.5 (3 of 6 synthetic validation fixtures intentionally invalid) |
+| Unsupported action rejection count | 1 |
+| Action policy mismatch count | 2 |
+| Policy fallback correctness rate | 1 |
+
 ## Initial Scenario Suite (S001–S015)
 
 | ID | One-line description |

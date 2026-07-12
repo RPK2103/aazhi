@@ -5,6 +5,7 @@ import type {
   RiskDeltaType,
   RiskState,
 } from "@/domain/risk";
+import type { OperationalAction } from "@/domain/policy";
 
 /**
  * Bounded vocabulary for scenario metadata documenting product capabilities
@@ -36,6 +37,7 @@ export interface RiskScenarioExpectations {
   expectedTriggerConcepts: readonly RiskConcept[];
   expectedActiveConcernConcepts?: readonly RiskConcept[];
   expectedMeasurementDeltas?: readonly ExpectedMeasurementDelta[];
+  expectedOperationalAction: OperationalAction;
 }
 
 /**

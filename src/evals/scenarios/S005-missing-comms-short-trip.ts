@@ -36,5 +36,6 @@ export const S005_MISSING_COMMS_SHORT_TRIP: RiskScenario = {
     expectedReassessmentReason: "NO_MATERIAL_CHANGE",
     expectedTriggerConcepts: [],
     expectedActiveConcernConcepts: ["COMMUNICATION_REDUNDANCY"],
+    expectedOperationalAction: "NO_ACTION_REQUIRED",
   },
 };
