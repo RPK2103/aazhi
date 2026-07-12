@@ -41,6 +41,34 @@ Capability gaps do not fail scenarios automatically. They are aggregated in suit
 
 Gemini evaluation (Risk Interpreter) is planned for a later phase. Phase 3 establishes the deterministic baseline that future AI interpretation must respect.
 
+## AI Boundary Evaluation (Phase 4)
+
+Phase 4 evaluates whether deterministic facts reach the AI boundary correctly. It does **not** claim natural-language interpretation quality or field accuracy. No LLM-as-judge system exists. No real Gemini calls occur during evaluation.
+
+Metrics are computed by `evaluateInterpreterBoundary` in `src/evals/ai/`:
+
+| Metric | Definition |
+| --- | --- |
+| Interpreter eligibility count | Scenarios where `shouldInvokeRiskInterpreter` returns true |
+| Interpreter skip count | Scenarios where it returns false |
+| Input construction success rate | Eligible scenarios with valid `RiskInterpretationInput` |
+| Active concern input accuracy | Eligible scenarios where input active concerns match current state |
+| Delta preservation rate | Eligible scenarios where input deltas match `calculateRiskDeltas` output |
+| Reassessment decision preservation rate | Eligible scenarios where input decision matches `evaluateReassessmentNeed` |
+
+### Phase 4 calculated results (initial 15-scenario suite)
+
+| Metric | Value |
+| --- | --- |
+| Interpreter eligibility count | 4 |
+| Interpreter skip count | 11 |
+| Input construction success rate | 1 |
+| Active concern input accuracy | 1 |
+| Delta preservation rate | 1 |
+| Reassessment decision preservation rate | 1 |
+
+Eligible scenarios: S003, S004, S008, S009.
+
 ## Initial Scenario Suite (S001–S015)
 
 | ID | One-line description |

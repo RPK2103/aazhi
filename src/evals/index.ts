@@ -24,6 +24,13 @@ export {
 export { conceptsExactMatch, normalizeConceptOrder } from "./concept-utils";
 
 export {
+  evaluateInterpreterBoundary,
+  type InterpreterBoundaryEvaluation,
+  type InterpreterScenarioResult,
+  type InterpreterInputChecks,
+} from "./ai";
+
+export {
   INITIAL_RISK_SCENARIOS,
   S001_STABLE_NO_CONCERNS,
   S002_STABLE_ENGINE_CONCERN,

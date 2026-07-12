@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { evaluateInterpreterBoundary } from "./ai";
 import { conceptsExactMatch } from "./concept-utils";
 import { evaluateRiskScenario } from "./evaluate-scenario";
 import { evaluateRiskScenarioSuite } from "./evaluate-suite";
@@ -278,6 +279,36 @@ describe("eval harness isolation", () => {
     const evalModule = await import("./index");
     expect(Object.keys(evalModule)).not.toContain("generateAssessment");
     expect(JSON.stringify(evalModule)).not.toContain("gemini");
+  });
+
+  it("makes no real Gemini calls in interpreter boundary evaluation", () => {
+    const evaluation = evaluateInterpreterBoundary(INITIAL_RISK_SCENARIOS);
+    expect(evaluation.totalScenarios).toBe(15);
+    expect(evaluation.inputConstructionSuccessRate).toBe(1);
+  });
+});
+
+describe("AI boundary evaluation", () => {
+  const evaluation = evaluateInterpreterBoundary(INITIAL_RISK_SCENARIOS);
+
+  it("covers all 15 scenarios", () => {
+    expect(evaluation.results).toHaveLength(15);
+  });
+
+  it("retains known capability gap metadata on gap scenarios", () => {
+    const s011 = evaluation.results.find((result) => result.scenarioId === "S011");
+    expect(s011?.knownCapabilityGaps).toContain(
+      "CHECK_IN_EVENT_NOT_YET_MODELLED",
+    );
+    expect(s011?.eligible).toBe(false);
+  });
+
+  it("does not convert capability gaps into AI facts", () => {
+    for (const result of evaluation.results) {
+      if (result.knownCapabilityGaps.length > 0 && !result.eligible) {
+        expect(result.inputConstructed).toBe(false);
+      }
+    }
   });
 });
 

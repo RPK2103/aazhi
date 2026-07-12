@@ -680,6 +680,76 @@ These metrics measure conformance to synthetic deterministic product scenarios. 
 
 ---
 
+## Phase 4 AAZHI Risk Interpreter
+
+Phase 4 adds a constrained AI interpretation boundary under `src/lib/ai/`. It implements **AI INTERPRETS** only — deterministic detection (Phase 2) and policy (Phase 5) remain separate.
+
+### AI interpretation boundary
+
+The Risk Interpreter is **not** a chatbot. It receives already-calculated deterministic risk context and explains the interaction between:
+
+- calculated risk deltas
+- active operational concerns
+- trip context
+- the deterministic reassessment decision
+
+It must **not** calculate marine deltas, decide reassessment, modify risk posture, invent concerns or measurements, resolve concerns, provide navigation instructions, issue maritime clearance, or declare a vessel safe or unsafe.
+
+### Selective model invocation
+
+`shouldInvokeRiskInterpreter` returns `true` only when `reassessmentDecision.required === true`. Scenarios with `NO_MATERIAL_CHANGE` (e.g. S001, S015) skip interpreter invocation entirely. No probabilistic invocation logic exists.
+
+### Interpreter input contract
+
+`buildRiskInterpretationInput(currentRiskState, calculatedDeltas, reassessmentDecision)` produces `RiskInterpretationInput` containing:
+
+- `tripContext` — preserved from current state
+- `activeConcerns` — filtered via domain `isActiveConcern` (OPEN and RESOLUTION_REPORTED only)
+- `calculatedDeltas` — preserved exactly from `calculateRiskDeltas` output
+- `reassessmentDecision` — preserved exactly from `evaluateReassessmentNeed` output
+
+The input intentionally excludes previous/current `RiskState` snapshots, raw Open-Meteo JSON, full `MarineContext`, images, base64, UI state, and legacy `AazhiAssessment`.
+
+### Structured output contract
+
+`RiskInterpretation` contains only:
+
+- `interactionSummary`
+- `significance`
+- `uncertainty`
+- `relevantConcepts`
+
+No `materialChange`, `proposedAction`, risk/safety scores, or navigation commands. Action policy is Phase 5; safety retrieval is Phase 6.
+
+### Fail-closed behaviour
+
+`interpretRiskChange` validates provider output with `riskInterpretationSchema`. Provider failure, malformed JSON, and schema validation failure throw `RiskInterpretationError`. No fabricated fallback interpretation is returned.
+
+### AI cannot fill known capability gaps
+
+Scenarios with `knownCapabilityGaps` (e.g. S011 `CHECK_IN_EVENT_NOT_YET_MODELLED`) must not have gap metadata serialized into interpreter input. Gemini cannot invent missed-check-in or official-alert facts absent from `RiskState`.
+
+### Gemini product isolation
+
+Phase 4 creates `createGeminiRiskInterpreterProvider` as a parallel boundary. `generateAssessment` in `src/lib/gemini.ts` is **not** modified. The Risk Interpreter is **not** connected to `POST /api/assess`.
+
+### Phase 4 interpreter eligibility (derived from initial suite)
+
+Evaluated by executing the real 15-scenario harness and reassessment gate:
+
+| Metric | Value |
+| --- | --- |
+| Interpreter eligibility count | 4 |
+| Interpreter skip count | 11 |
+| Input construction success rate | 1 |
+| Active concern input accuracy | 1 |
+| Delta preservation rate | 1 |
+| Reassessment decision preservation rate | 1 |
+
+Eligible scenarios: S003, S004, S008, S009.
+
+---
+
 ## Phase 1 Readiness
 
 **READY** (Phase 0 complete; Phase 1 domain foundation landed on this branch)
