@@ -15,6 +15,7 @@ export default defineConfig({
       reporter: ["text", "json-summary"],
       include: [
         "src/app/api/assess/route.ts",
+        "src/domain/risk/**/*.ts",
         "src/lib/gemini.ts",
         "src/lib/locations.ts",
         "src/lib/marine.ts",

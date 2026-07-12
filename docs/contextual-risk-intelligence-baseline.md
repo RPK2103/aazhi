@@ -468,9 +468,56 @@ Proposed future paths vs current architecture:
 
 ---
 
+## Phase 1 Domain Foundation
+
+Phase 1 adds a pure TypeScript risk domain boundary under `src/domain/risk/`. It does **not** change assessment behaviour, Gemini prompts/schemas, the assess API, marine fetch, `AazhiAssessment`, or the UI.
+
+### New boundary: `src/domain/risk/`
+
+| File | Responsibility |
+| --- | --- |
+| `risk-concepts.ts` | Bounded `RISK_CONCEPTS` tuple + `RiskConcept` union + `isRiskConcept` |
+| `concern.ts` | `ConcernStatus`, `VesselConcern`, `canTransitionConcernStatus`, `isActiveConcern` |
+| `marine-risk-state.ts` | `MarineRiskState` normalized snapshot (`number \| null` measurements) |
+| `trip-context.ts` | `TripContext` + `TripStatus` |
+| `risk-posture.ts` | Active-trip `RiskPosture` and separate `DeparturePosture` |
+| `risk-state.ts` | Complete `RiskState` + `isValidRiskStateVersion` |
+| `index.ts` | Public barrel export (`@/domain/risk`) |
+
+No `src/domain/risk/delta/` yet (Phase 2). Domain modules must not import GenAI, React, Next.js, API route types, or UI.
+
+### Bounded RiskConcept vocabulary
+
+Exactly eleven concepts: `ENGINE_RELIABILITY`, `HULL_INTEGRITY`, `VESSEL_STABILITY`, `PRIMARY_COMMUNICATION`, `COMMUNICATION_REDUNDANCY`, `SAFETY_EQUIPMENT`, `WAVE_CONDITIONS`, `WIND_CONDITIONS`, `OFFICIAL_ALERT`, `TRIP_DURATION`, `CHECK_IN_STATUS`. Free strings are not allowed.
+
+### Concern lifecycle semantics
+
+Statuses: `OPEN`, `RESOLUTION_REPORTED`, `RESOLVED`, `DISMISSED`.
+
+- `RESOLUTION_REPORTED` ≠ `RESOLVED` (claimed fix is not confirmed resolution).
+- Active concerns: `OPEN` and `RESOLUTION_REPORTED`.
+- Inactive: `RESOLVED` and `DISMISSED`.
+- Transitions are pure and deterministic via `canTransitionConcernStatus` (same-state allowed as idempotent).
+
+### Active-trip RiskPosture vs DeparturePosture
+
+- **RiskPosture** (operational trip state): `BASELINE`, `CAUTION`, `REASSESSMENT_REQUIRED`, `COORDINATOR_REVIEW_REQUIRED`, `OFFICIAL_ALERT_PRIORITY`.
+- **DeparturePosture** (future departure decisions): `DEPARTURE_HOLD`, `PRE_DEPARTURE_ACTION_REQUIRED`, `DELAY_AND_REASSESS`, `CAUTION`.
+- Legacy assessment postures remain in `src/lib/types.ts` (`ACTION_POSTURES` / `AazhiAssessment.actionPosture`) and are intentionally unchanged.
+
+### MarineRiskState normalization contract
+
+Fields: `waveHeightM`, `wavePeriodS`, `windSpeedKmh`, `windDirectionDeg` as `number | null`; `capturedAt` as ISO string. Missing provider values stay `null` (never coerced to `0`). No deltas, thresholds, or scores in Phase 1.
+
+### Existing assessment behaviour
+
+Intentionally unchanged: `generateAssessment`, `fetchMarineContext`, `POST /api/assess`, Gemini `RESPONSE_JSON_SCHEMA`, and UI binding to `AazhiAssessment` remain as in Phase 0.
+
+---
+
 ## Phase 1 Readiness
 
-**READY**
+**READY** (Phase 0 complete; Phase 1 domain foundation landed on this branch)
 
 Phase 0 inspection finds a stable, test-backed assessment core with clear Gemini and marine boundaries and a redesigned UI that still calls the same `/api/assess` contract. There are **no Phase 0 documentation blockers** to starting Phase 1 design/implementation of the risk domain model and deterministic delta seam.
 
@@ -491,7 +538,7 @@ Note: previous validated baseline cited 78 tests. Current suite is **81** after 
 Non-blocking watch items (not readiness blockers):
 
 - Legacy unused intake components remain on disk.
-- Coverage config does not yet include future `src/domain/**` or UI hooks.
+- Coverage config now includes `src/domain/risk/**/*.ts`; UI hooks remain out of coverage include.
 - No persistence layer exists yet (expected; required later for Vessel Risk Record).
 - Enum duplication between `types.ts` and Gemini JSON schema should be resolved when touching that boundary.
 )
