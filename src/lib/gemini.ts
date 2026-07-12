@@ -65,7 +65,22 @@ Rules:
 5. A condition conflict exists only when reported or visible local context materially differs from, adds concern beyond, or complicates the external marine context. Do not force one because an image exists.
 6. Avoid generic monsoon advice when specific readiness concerns exist. Prioritize no more than three immediate actions. Keep the brief concise, operational, and field-oriented.
 7. Encourage following official maritime, weather, and local authority instructions.
-8. Generate all descriptive guidance in the requested language. In Tamil mode, genuinely write summaries, explanations, titles, reasons, actions, and checklist text in Tamil. Preserve the exact English enum values required by the JSON schema.`;
+8. Generate all descriptive guidance in the requested language. In Tamil mode, genuinely write summaries, explanations, titles, reasons, actions, and checklist text in Tamil. Preserve the exact English enum values required by the JSON schema.
+
+Output style (same JSON schema; shorter plain language only):
+- Use short sentences, direct instructions, plain everyday words, one idea per sentence.
+- No corporate language, dramatic language, unnecessary jargon, or repeated explanation.
+- English: write for a person who needs to understand the decision quickly at the shore. Prefer simple spoken English.
+- Tamil: use clear, direct, everyday Tamil. Avoid unnecessarily formal or literary Tamil. Do not transliterate technical English when a simple understandable phrase is possible.
+- situationSummary: maximum 2 short sentences; prefer about 25 words or fewer in English-equivalent length.
+- departureBlockers.title: 3 to 7 words.
+- departureBlockers.reason: one short sentence; prefer about 18 words or fewer in English-equivalent length.
+- conditionConflict.explanation: maximum 2 short sentences.
+- immediateActions: each item one direct sentence; prefer 8 to 16 words in English-equivalent length.
+- marineContextExplanation: maximum 2 short sentences.
+- whyThisMatters: maximum 2 short sentences.
+- preDepartureChecklist, atSeaActions, afterReturnActions: each item one short action.
+- Safety-critical clarity matters more than exact word counts. Do not omit essential safety meaning.`;
 
 const RESPONSE_JSON_SCHEMA = {
   type: "object",

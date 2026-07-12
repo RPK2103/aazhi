@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AAZHI — Underwater Decision Workspace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-high": "#272a2c",
+                    "on-primary-fixed": "#00201d",
+                    "on-surface": "#e0e3e5",
+                    "on-tertiary-fixed": "#081d2b",
+                    "inverse-primary": "#006a63",
+                    "secondary": "#aecae1",
+                    "on-secondary-container": "#a0bcd2",
+                    "on-secondary": "#173345",
+                    "secondary-container": "#314c5f",
+                    "surface-container": "#1d2022",
+                    "on-primary": "#003733",
+                    "on-primary-fixed-variant": "#00504a",
+                    "surface-dim": "#101415",
+                    "error": "#ffb4ab",
+                    "surface": "#101415",
+                    "background": "#101415",
+                    "secondary-fixed-dim": "#aecae1",
+                    "on-tertiary": "#1f3241",
+                    "surface-variant": "#323537",
+                    "primary-fixed-dim": "#5adace",
+                    "tertiary-fixed": "#d0e5f8",
+                    "tertiary": "#c7dcef",
+                    "surface-container-highest": "#323537",
+                    "primary": "#6feee1",
+                    "outline-variant": "#3c4947",
+                    "surface-container-lowest": "#0b0f10",
+                    "on-secondary-fixed": "#001e2e",
+                    "surface-tint": "#5adace",
+                    "inverse-surface": "#e0e3e5",
+                    "inverse-on-surface": "#2d3133",
+                    "outline": "#869491",
+                    "tertiary-fixed-dim": "#b5c9dc",
+                    "on-secondary-fixed-variant": "#2f4a5c",
+                    "on-surface-variant": "#bbc9c7",
+                    "on-error-container": "#ffdad6",
+                    "tertiary-container": "#acc0d3",
+                    "error-container": "#93000a",
+                    "on-primary-container": "#005750",
+                    "primary-container": "#4fd1c5",
+                    "surface-container-low": "#191c1e",
+                    "on-error": "#690005",
+                    "secondary-fixed": "#cae6fd",
+                    "primary-fixed": "#79f7ea",
+                    "on-background": "#e0e3e5",
+                    "on-tertiary-container": "#3b4f5e",
+                    "surface-bright": "#363a3b",
+                    "on-tertiary-fixed-variant": "#364958"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "24px",
+                    "margin-desktop": "48px",
+                    "container-max-width": "1440px",
+                    "margin-mobile": "16px",
+                    "unit": "8px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Outfit"],
+                    "label-sm": ["Plus Jakarta Sans"],
+                    "headline-md": ["Outfit"],
+                    "body-lg": ["Plus Jakarta Sans"],
+                    "body-md": ["Plus Jakarta Sans"]
+            },
+            "fontSize": {
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-sm": ["13px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #050B14;
+            color: #e0e3e5;
+            overflow: hidden;
+            height: 100vh;
+        }
+        .sea-glass {
+            background: rgba(26, 54, 72, 0.4);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(79, 209, 197, 0.15);
+            box-shadow: inset 0 0 20px rgba(79, 209, 197, 0.05);
+        }
+        .mic-pulse {
+            animation: pulse 3s infinite cubic-bezier(0.4, 0, 0.6, 1);
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+        .water-refraction {
+            mask-image: linear-gradient(to bottom, transparent, black 20%);
+        }
+        .circular-progress {
+            background: conic-gradient(#4fd1c5 0% 75%, rgba(255,255,255,0.05) 75% 100%);
+        }
+    </style>
+</head>
+<body class="font-body-md text-on-surface">
+<!-- Background Layer -->
+<div class="fixed inset-0 z-0">
+<!-- STITCH_SHADER_START:ANIMATION_3 class="absolute inset-0 w-full h-full" -->
+<div class="absolute inset-0 w-full h-full" style="display:block;">
+<canvas id="shader-canvas-ANIMATION_3" style="display:block;width:100%;height:100%"></canvas>
+<script>
+(function() {
+  const canvas = document.getElementById('shader-canvas-ANIMATION_3');
+
+  // Sync the WebGL drawing-buffer size with the CSS-driven layout size.
+  // This fires on initial layout and whenever the element is resized.
+  function syncSize() {
+    const w = canvas.clientWidth  || 1280;
+    const h = canvas.clientHeight || 720;
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width  = w;
+      canvas.height = h;
+    }
+  }
+  if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(syncSize).observe(canvas);
+  }
+  syncSize();
+
+  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  if (!gl) return;
+  const vs = `attribute vec2 a_position;
+varying vec2 v_texCoord;
+void main() {
+  v_texCoord = a_position * 0.5 + 0.5;
+  gl_Position = vec4(a_position, 0.0, 1.0);
+}`;
+  const fs = `precision highp float;
+uniform float u_time;
+uniform vec2 u_resolution;
+uniform vec2 u_mouse;
+varying vec2 v_texCoord;
+
+float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123); }
+float noise(vec2 p) {
+    vec2 i = floor(p); vec2 f = fract(p);
+    f = f*f*(3.0-2.0*f);
+    return mix(mix(hash(i + vec2(0,0)), hash(i + vec2(1,0)), f.x),
+               mix(hash(i + vec2(0,1)), hash(i + vec2(1,1)), f.x), f.y);
+}
+
+void main() {
+    vec2 uv = v_texCoord;
+    
+    // Darker, more pressurized underwater colors
+    vec3 abyss = vec3(0.01, 0.02, 0.04);
+    vec3 midTeal = vec3(0.02, 0.08, 0.12);
+    vec3 surfaceRefraction = vec3(0.2, 0.6, 0.6);
+    
+    // Caustics/Refraction from surface (above)
+    float caustics = noise(uv * 5.0 + u_time * 0.1) * noise(uv * 12.0 - u_time * 0.2);
+    caustics = pow(caustics, 4.0) * 0.2;
+    
+    // Underwater fog/haze
+    float depth = uv.y; 
+    vec3 col = mix(midTeal, abyss, depth);
+    
+    // Light rays from above
+    float rays = abs(sin(uv.x * 3.0 + u_time * 0.05)) * (1.0 - depth);
+    col += surfaceRefraction * rays * 0.05;
+    col += surfaceRefraction * caustics * (1.0 - depth);
+    
+    // Subtle particulates (snow)
+    float particulates = hash(uv + floor(u_time * 5.0) * 0.001);
+    if (particulates > 0.999) col += 0.1;
+
+    gl_FragColor = vec4(col, 1.0);
+}`;
+  function cs(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, cs(gl.VERTEX_SHADER, vs));
+  gl.attachShader(prog, cs(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(prog);
+  gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+  const pos = gl.getAttribLocation(prog, 'a_position');
+  gl.enableVertexAttribArray(pos);
+  gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
+  const uTime = gl.getUniformLocation(prog, 'u_time');
+  const uRes = gl.getUniformLocation(prog, 'u_resolution');
+  const uMouse = gl.getUniformLocation(prog, 'u_mouse');
+
+  // u_mouse is in pixel coordinates matching u_resolution (ShaderToy convention).
+  // Shaders that need normalized coords should use: u_mouse / u_resolution.
+  let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+  window.addEventListener('mousemove', (event) => {
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width && rect.height) {
+      const nx = (event.clientX - rect.left) / rect.width;
+      const ny = 1.0 - (event.clientY - rect.top) / rect.height;
+      mouse.x = nx * canvas.width;
+      mouse.y = ny * canvas.height;
+    }
+  });
+
+  function render(t) {
+    if (typeof ResizeObserver === 'undefined') syncSize();
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    if (uTime) gl.uniform1f(uTime, t * 0.001);
+    if (uRes) gl.uniform2f(uRes, canvas.width, canvas.height);
+    if (uMouse) gl.uniform2f(uMouse, mouse.x, mouse.y);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    requestAnimationFrame(render);
+  }
+  render(0);
+})();
+</script>
+</div>
+<!-- STITCH_SHADER_END:ANIMATION_3 -->
+<!-- Overlay for Depth/Light Shafts -->
+<div class="absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-[#050B14] pointer-events-none"></div>
+</div>
+<!-- Layout Container -->
+<div class="relative z-10 flex flex-col h-screen">
+<!-- TOP CONTEXT BAR -->
+<header class="flex justify-between items-center px-gutter h-16 w-full sea-glass border-b border-white/5 z-50">
+<div class="flex items-center gap-4">
+<span class="font-display-lg text-headline-md text-primary tracking-tight">AAZHI</span>
+<span class="h-4 w-px bg-white/20"></span>
+<span class="font-label-sm text-label-sm tracking-widest text-on-surface-variant">MARINE DECISION INTELLIGENCE</span>
+</div>
+<div class="flex flex-col items-center">
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-[0.2em]">Chennai Coast</span>
+<span class="text-[10px] font-label-sm text-on-surface-variant opacity-70">24 OCT 2026 | MARINE CONTEXT · 08:42</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5">
+<span class="material-symbols-outlined text-[18px] text-primary">volume_up</span>
+<span class="font-label-sm text-label-sm">MUTED</span>
+</div>
+</div>
+</header>
+<!-- MAIN WORKSPACE -->
+<main class="flex-1 flex p-gutter gap-gutter overflow-hidden">
+<!-- LEFT PANEL (Observation Instrument) -->
+<section class="w-[32%] h-full flex flex-col gap-6 sea-glass rounded-[32px] p-8 border-white/10">
+<div class="space-y-1">
+<p class="font-label-sm text-label-sm text-primary tracking-widest uppercase">Before Departure</p>
+<h2 class="font-display-lg text-headline-md leading-tight">What are you seeing today?</h2>
+</div>
+<!-- Voice Interaction -->
+<div class="flex-1 flex flex-col items-center justify-center gap-6 py-4">
+<div class="relative">
+<div class="absolute inset-0 bg-primary/20 rounded-full blur-2xl mic-pulse"></div>
+<button class="relative w-32 h-32 rounded-full border-2 border-primary/40 bg-surface-container-low flex items-center justify-center group hover:border-primary transition-all duration-500">
+<span class="material-symbols-outlined text-[48px] text-primary group-hover:scale-110 transition-transform">mic</span>
+<div class="absolute inset-0 rounded-full border border-primary/20 animate-ping"></div>
+</button>
+</div>
+<span class="font-label-sm text-label-sm text-primary tracking-[0.15em]">SPEAK YOUR OBSERVATION</span>
+</div>
+<!-- Environmental Camera Frame -->
+<div class="relative aspect-video rounded-xl overflow-hidden border border-white/10 group cursor-crosshair">
+<img class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-700" data-alt="A wide angle underwater shot looking upwards towards the boat hull through dark teal water. Refracted sunlight creates shimmering caustic patterns on the hull. The scene is cinematic and atmospheric, captured with a high-end maritime lens, featuring subtle marine particles drifting in the light shafts." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsJsJPbum1OTh3hfnbJAlVUyguTFDz-PQ3ZtCSV7GFSxD9bJfHkfN2a7DE3TouC2tdkwy90h4atm_EhSvpHnpdHXVEO3xauvnH8XBDqAMacPtjN_oqpR6Ldsc_k0z__ckKL7eyoXfzldHGVR0vtsLm1eNfq1ceRXDCcPZkC_1WyqnMUPhCxqwovngexk1JZYNUy8zuouXUrKBniMjcmtXM3y0FU7VLRF2FfvK7yty_5UiMnHq9LkNyrA"/>
+<!-- Viewfinder Overlay -->
+<div class="absolute inset-4 border border-white/20 pointer-events-none">
+<div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-primary"></div>
+<div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-primary"></div>
+<div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-primary"></div>
+<div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-primary"></div>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center opacity-40">
+<span class="material-symbols-outlined text-primary">add</span>
+</div>
+</div>
+</div>
+<!-- Inputs -->
+<div class="space-y-4">
+<div class="relative">
+<input class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-1 focus:ring-primary focus:border-primary transition-all outline-none" placeholder="Vessel concern" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-black/20 border border-white/10 rounded-xl p-3 flex flex-col">
+<span class="text-[10px] text-on-surface-variant font-label-sm uppercase">Port</span>
+<span class="font-body-md text-sm">Ennore Terminal</span>
+</div>
+<div class="bg-black/20 border border-white/10 rounded-xl p-3 flex flex-col">
+<span class="text-[10px] text-on-surface-variant font-label-sm uppercase">Vessel ID</span>
+<span class="font-body-md text-sm">ARC-892</span>
+</div>
+</div>
+</div>
+<button class="w-full py-4 bg-primary text-on-primary-fixed font-bold rounded-2xl shadow-[0_0_20px_rgba(111,238,225,0.3)] hover:scale-[0.98] transition-transform active:scale-95">
+                    GENERATE ASSESSMENT
+                </button>
+</section>
+<!-- RIGHT WORKSPACE (Assessment Dashboard) -->
+<section class="flex-1 flex flex-col gap-gutter">
+<!-- Top Grid -->
+<div class="grid grid-cols-2 gap-gutter h-[60%]">
+<!-- Card 1: DEPARTURE POSTURE -->
+<div class="sea-glass rounded-[32px] p-8 flex flex-col items-center justify-center relative overflow-hidden border-white/10">
+<div class="absolute top-6 left-8 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">anchor</span>
+<span class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant">Departure Posture</span>
+</div>
+<!-- Circular Segmented Instrument -->
+<div class="relative w-64 h-64 flex items-center justify-center">
+<svg class="absolute inset-0 w-full h-full -rotate-90" viewbox="0 0 100 100">
+<circle cx="50" cy="50" fill="none" r="45" stroke="rgba(255,255,255,0.05)" stroke-dasharray="282" stroke-width="8"></circle>
+<circle cx="50" cy="50" fill="none" r="45" stroke="#6feee1" stroke-dasharray="211 282" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<div class="text-center z-10">
+<h3 class="font-display-lg text-display-lg text-primary leading-none">HOLD</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant tracking-[0.2em] mt-2">DEPARTURE</p>
+</div>
+</div>
+<div class="mt-6 px-4 py-2 rounded-full border border-error/30 bg-error/10 text-error font-label-sm text-xs">
+                            CRITICAL RISK IDENTIFIED
+                        </div>
+</div>
+<!-- Right Column Flex -->
+<div class="flex flex-col gap-gutter">
+<!-- Card 2: MARINE CONDITIONS -->
+<div class="flex-1 sea-glass rounded-[28px] p-6 border-white/10">
+<h4 class="font-label-sm text-xs uppercase tracking-widest text-on-surface-variant mb-6">Marine Conditions</h4>
+<div class="flex justify-between items-end gap-2 h-24">
+<div class="flex flex-col items-center gap-2">
+<div class="w-1.5 h-16 bg-surface-variant rounded-full relative overflow-hidden">
+<div class="absolute bottom-0 w-full h-3/4 bg-primary shadow-[0_0_10px_#6feee1]"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant">WIND</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-1.5 h-20 bg-surface-variant rounded-full relative overflow-hidden">
+<div class="absolute bottom-0 w-full h-1/2 bg-primary shadow-[0_0_10px_#6feee1]"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant">WAVE</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-1.5 h-12 bg-surface-variant rounded-full relative overflow-hidden">
+<div class="absolute bottom-0 w-full h-[90%] bg-primary shadow-[0_0_10px_#6feee1]"></div>
+</div>
+<span class="text-[10px] text-on-surface-variant">SWELL</span>
+</div>
+<div class="flex-1 flex flex-col justify-between h-full pl-4">
+<div class="flex items-center justify-between">
+<span class="text-xs">Wind Speed</span>
+<span class="text-primary font-bold">18 KTS</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-xs">Wave Height</span>
+<span class="text-primary font-bold">2.4 M</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-xs">Visibility</span>
+<span class="text-primary font-bold">4.2 NM</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 3: CRITICAL SIGNALS -->
+<div class="flex-1 sea-glass rounded-[28px] p-6 border-white/10">
+<h4 class="font-label-sm text-xs uppercase tracking-widest text-on-surface-variant mb-4">Critical Signals</h4>
+<ul class="space-y-3">
+<li class="flex items-center justify-between p-3 rounded-xl bg-error/10 border border-error/20">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-error" data-weight="fill">report</span>
+<span class="text-sm font-medium">Engine concern</span>
+</div>
+<span class="text-[10px] font-bold text-error uppercase">Critical</span>
+</li>
+<li class="flex items-center justify-between p-3 rounded-xl bg-surface-variant/30 border border-white/5">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">waves</span>
+<span class="text-sm font-medium">Wave condition conflict</span>
+</div>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase">Caution</span>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<!-- Bottom Grid -->
+<div class="grid grid-cols-12 gap-gutter flex-1">
+<!-- Card 4: TRIP CONTEXT -->
+<div class="col-span-4 sea-glass rounded-[28px] p-6 border-white/10 flex flex-col">
+<h4 class="font-label-sm text-xs uppercase tracking-widest text-on-surface-variant mb-4">Trip Context</h4>
+<div class="space-y-4">
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary opacity-60">location_on</span>
+<div>
+<p class="text-[10px] text-on-surface-variant leading-none mb-1">LOCATION</p>
+<p class="text-xs font-semibold">Chennai Outer Anchorage</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary opacity-60">directions_boat</span>
+<div>
+<p class="text-[10px] text-on-surface-variant leading-none mb-1">VESSEL</p>
+<p class="text-xs font-semibold">Tug Boat Delta Alpha-1</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary opacity-60">visibility</span>
+<div>
+<p class="text-[10px] text-on-surface-variant leading-none mb-1">OBSERVATION</p>
+<p class="text-xs font-semibold italic">"Visible hull vibrations..."</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Wide Card: BEFORE YOU LEAVE -->
+<div class="col-span-8 sea-glass rounded-[28px] p-6 border-white/10 flex flex-col">
+<h4 class="font-label-sm text-xs uppercase tracking-widest text-on-surface-variant mb-6">Before You Leave</h4>
+<div class="flex gap-4 h-full">
+<div class="flex-1 bg-surface-container-low/40 rounded-2xl p-4 border border-white/5 hover:border-primary/20 transition-all cursor-pointer group">
+<span class="text-[10px] text-primary mb-2 block font-bold">01.</span>
+<h5 class="text-sm font-semibold mb-2 group-hover:text-primary transition-colors">Check the engine</h5>
+<p class="text-[11px] text-on-surface-variant leading-relaxed">Inspect primary cooling lines for aeration indicators before ignition.</p>
+</div>
+<div class="flex-1 bg-surface-container-low/40 rounded-2xl p-4 border border-white/5 hover:border-primary/20 transition-all cursor-pointer group">
+<span class="text-[10px] text-primary mb-2 block font-bold">02.</span>
+<h5 class="text-sm font-semibold mb-2 group-hover:text-primary transition-colors">Secure the deck load</h5>
+<p class="text-[11px] text-on-surface-variant leading-relaxed">Shift weights to aft-port to compensate for incoming swell pattern.</p>
+</div>
+<div class="flex-1 bg-primary/10 rounded-2xl p-4 border border-primary/20 hover:bg-primary/20 transition-all cursor-pointer group">
+<span class="text-[10px] text-primary mb-2 block font-bold">03.</span>
+<h5 class="text-sm font-semibold mb-2 text-primary">Delay departure</h5>
+<p class="text-[11px] text-on-surface-variant leading-relaxed">Wait for 09:30 tide window to minimize cavitation risk during exit.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+<!-- Micro-interaction for breathing UI elements -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const panels = document.querySelectorAll('.sea-glass');
+            panels.forEach((panel, i) => {
+                panel.style.transition = 'transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)';
+                panel.addEventListener('mouseenter', () => {
+                    panel.style.transform = 'translateY(-4px)';
+                });
+                panel.addEventListener('mouseleave', () => {
+                    panel.style.transform = 'translateY(0)';
+                });
+            });
+        });
+    </script>
+</body></html>

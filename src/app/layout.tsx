@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Manrope } from "next/font/google";
+import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
-const manrope = Manrope({
-  variable: "--font-manrope",
-  subsets: ["latin", "latin-ext"],
-  weight: ["400", "500", "600", "700"],
+const outfit = Outfit({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["600", "700"],
 });
 
-const plexMono = IBM_Plex_Mono({
-  variable: "--font-mono",
+const plusJakarta = Plus_Jakarta_Sans({
+  variable: "--font-body",
   subsets: ["latin"],
   weight: ["400", "500", "600"],
 });
@@ -27,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${manrope.variable} ${plexMono.variable}`}>
+      <body className={`${outfit.variable} ${plusJakarta.variable}`}>
         {children}
       </body>
     </html>
