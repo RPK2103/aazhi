@@ -515,6 +515,92 @@ Intentionally unchanged: `generateAssessment`, `fetchMarineContext`, `POST /api/
 
 ---
 
+## Phase 2 Deterministic Risk Delta Engine
+
+Phase 2 adds a pure deterministic comparison layer under `src/domain/risk/delta/`. It answers **what changed** between two `RiskState` snapshots. It does **not** answer whether the sea is safe, whether the vessel should return, interpret changes in natural language, invoke Gemini, mutate risk posture, or persist state.
+
+Architecture rule preserved: **deterministic systems detect; AI interprets; policy bounds the action.**
+
+### Delta engine boundary
+
+| File | Responsibility |
+| --- | --- |
+| `delta-types.ts` | Bounded `RiskDeltaType`, `MarineMeasurement`, and `RiskDelta` model |
+| `reassessment-sensitivity.ts` | `DEFAULT_REASSESSMENT_SENSITIVITY` — contextual reconsideration thresholds, not safety limits |
+| `marine-delta.ts` | Pure marine measurement comparison (`waveHeightM`, `wavePeriodS`, `windSpeedKmh`, `windDirectionDeg`) |
+| `concern-delta.ts` | Concern lifecycle comparison by stable concern ID |
+| `delta-engine.ts` | `calculateRiskDeltas(previous, current)` — combines marine + concern deltas |
+| `reassessment-gate.ts` | `evaluateReassessmentNeed(deltas, activeConcerns)` — deterministic reassessment gate |
+| `index.ts` | Public barrel export via `@/domain/risk` |
+
+No imports from GenAI, React, Next.js, API routes, or UI. Gemini remains uninvolved.
+
+### Marine measurement comparison
+
+- Maps `waveHeightM` / `wavePeriodS` → `WAVE_CONDITIONS`; `windSpeedKmh` / `windDirectionDeg` → `WIND_CONDITIONS`.
+- Handles `number → number`, `null → number`, `number → null`, and `null → null` (last produces no aggregate delta).
+- Numeric signed change = `current − previous`; absolute change = `abs(signed)`.
+- Floating-point results are normalized (e.g. `0.8 → 1.5` yields `0.7`, not `0.7000000000000001`).
+- Wind direction uses shortest angular distance (e.g. `350° → 10°` = `20°`, not `-340°`). No wind-direction reassessment sensitivity is configured in Phase 2.
+
+### Concern comparison
+
+- Compares concerns by stable ID across `previous.activeConcerns` and `current.activeConcerns`.
+- Detects `CONCERN_OPENED`, `CONCERN_STATUS_CHANGED`, `CONCERN_CLOSED`; omits `CONCERN_UNCHANGED` from aggregate output.
+- Reuses `isActiveConcern` for lifecycle semantics; does not mutate concern objects.
+
+### Reassessment sensitivity vs safety threshold
+
+`DEFAULT_REASSESSMENT_SENSITIVITY`:
+
+| Measurement | Threshold | Meaning |
+| --- | --- | --- |
+| Wave height | `0.5 m` absolute change | Large enough for contextual reconsideration |
+| Wind speed | `10 km/h` absolute change | Large enough for contextual reconsideration |
+
+These are **not** maritime danger thresholds, official safety limits, or departure limits. `reassessmentRelevant` on each `RiskDelta` marks whether the change meets this product sensitivity — not whether conditions are unsafe.
+
+### Aggregate delta semantics
+
+`calculateRiskDeltas` returns **meaningful changes only**. `VALUE_UNCHANGED` and `CONCERN_UNCHANGED` exist in the vocabulary for focused helpers but do not appear in the aggregate result. Identical risk states return `[]`.
+
+Output order: marine measurement deltas in fixed order (`WAVE_HEIGHT_M`, `WAVE_PERIOD_S`, `WIND_SPEED_KMH`, `WIND_DIRECTION_DEG`), then concern deltas sorted by concern ID.
+
+### Deterministic reassessment gate
+
+`evaluateReassessmentNeed(deltas, currentActiveConcerns)` returns `{ required, reason, triggerConcepts }`.
+
+Bounded `ReassessmentReason` values: `NO_MATERIAL_CHANGE`, `MATERIAL_ENVIRONMENTAL_CHANGE`, `MATERIAL_ENVIRONMENTAL_CHANGE_WITH_ACTIVE_CONCERN`, `CONCERN_STATE_CHANGED`, `OFFICIAL_ALERT_CHANGED` (vocabulary reserved for a future authoritative alert state; no `OFFICIAL_ALERT` delta is synthesized in Phase 2).
+
+### Reassessment reason precedence
+
+When multiple reasons apply, highest precedence wins:
+
+1. `OFFICIAL_ALERT_CHANGED`
+2. `MATERIAL_ENVIRONMENTAL_CHANGE_WITH_ACTIVE_CONCERN`
+3. `CONCERN_STATE_CHANGED`
+4. `MATERIAL_ENVIRONMENTAL_CHANGE`
+5. `NO_MATERIAL_CHANGE`
+
+`triggerConcepts` includes reassessment-relevant environmental concepts and, for the active-concern interaction case, concepts of current active concerns. Concepts are deduplicated and ordered by `RISK_CONCEPTS` vocabulary order.
+
+### S003 deterministic result (golden scenario)
+
+Scenario: vessel TN-04, `ENGINE_RELIABILITY` concern `OPEN`, marine worsening `0.8 → 1.5 m` waves and `13 → 18 km/h` wind, posture remains `CAUTION`.
+
+| Check | Result |
+| --- | --- |
+| Wave delta | `+0.7 m`, `reassessmentRelevant: true` |
+| Wind delta | `+5 km/h`, `reassessmentRelevant: false` (below 10 km/h sensitivity) |
+| Concern delta | None (unchanged `OPEN`) |
+| Reassessment | `required: true` |
+| Reason | `MATERIAL_ENVIRONMENTAL_CHANGE_WITH_ACTIVE_CONCERN` |
+| Trigger concepts | `ENGINE_RELIABILITY`, `WAVE_CONDITIONS` |
+| Gemini | Not invoked |
+| Posture mutation | None |
+
+---
+
 ## Phase 1 Readiness
 
 **READY** (Phase 0 complete; Phase 1 domain foundation landed on this branch)
