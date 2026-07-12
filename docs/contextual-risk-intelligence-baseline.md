@@ -601,6 +601,85 @@ Scenario: vessel TN-04, `ENGINE_RELIABILITY` concern `OPEN`, marine worsening `0
 
 ---
 
+## Phase 3 Scenario Evaluation Harness
+
+Phase 3 adds a typed scenario-based evaluation harness under `src/evals/`. It evaluates **deterministic product behaviour** against synthetic operational scenarios. Gemini is not evaluated in this phase.
+
+### Purpose
+
+The harness answers product-level questions for each scenario:
+
+- Did AAZHI detect the expected change?
+- Did it preserve the expected operational concern?
+- Did it trigger reassessment when expected?
+- Did it avoid reassessment for irrelevant or insufficient changes?
+- Did it produce the expected bounded trigger concepts?
+
+Scenario conformance measures alignment with **declared synthetic expectations**, not real-world safety accuracy, accident prediction, or field effectiveness.
+
+### Harness structure
+
+| File / area | Responsibility |
+| --- | --- |
+| `eval-types.ts` | `RiskScenario`, expectations, evaluation results, capability-gap vocabulary |
+| `evaluate-scenario.ts` | `evaluateRiskScenario` — calls real `calculateRiskDeltas` and `evaluateReassessmentNeed` |
+| `evaluate-suite.ts` | `evaluateRiskScenarioSuite` — runs multiple scenarios |
+| `metrics.ts` | Aggregate deterministic metrics and `formatScenarioSuiteReport` |
+| `fixtures/` | Deterministic `RiskState` factory helpers (no business-logic duplication) |
+| `scenarios/` | 15 declarative synthetic scenario fixtures |
+| `evals.test.ts` | Harness and suite verification via Vitest |
+
+### Initial scenario suite
+
+**15 synthetic scenarios** (S001–S015), importable as `INITIAL_RISK_SCENARIOS` from `@/evals`. See `docs/evaluations/README.md` for one-line descriptions.
+
+### Deterministic metrics
+
+| Metric | Definition |
+| --- | --- |
+| Reassessment expectation accuracy | Fraction of scenarios where actual `required` matches expected |
+| Reassessment reason accuracy | Fraction where actual bounded reason matches expected |
+| Trigger concept exact match rate | Fraction where trigger concepts exactly match after vocabulary-order normalization |
+| Active concern carry-forward accuracy | Fraction of scenarios with expected active-concern concepts that match |
+| False escalation count | Scenarios expected `required: false` but actual `true` |
+| Missed reassessment count | Scenarios expected `required: true` but actual `false` |
+
+`scenarioPassRate` is reported as a fraction from 0 to 1 (e.g. 15/15 → `1`).
+
+### Known capability gaps exposed
+
+Scenarios document boundaries not yet modelled in `RiskState`:
+
+| Gap | Scenarios |
+| --- | --- |
+| `TRIP_DURATION_NOT_YET_COMPARED` | S006 |
+| `CHECK_IN_EVENT_NOT_YET_MODELLED` | S010, S011, S012 |
+| `OFFICIAL_ALERT_STATE_NOT_YET_MODELLED` | S014 |
+
+Capability gaps are surfaced in suite metrics (`scenariosWithKnownCapabilityGaps`, `knownCapabilityGapCounts`) and do not automatically fail scenarios.
+
+### S003 golden scenario result
+
+| Check | Result |
+| --- | --- |
+| Wave delta | `+0.7 m`, `reassessmentRelevant: true` |
+| Wind delta | `+5 km/h`, `reassessmentRelevant: false` |
+| Active concern | `ENGINE_RELIABILITY` / `OPEN` |
+| Reassessment | `required: true` |
+| Reason | `MATERIAL_ENVIRONMENTAL_CHANGE_WITH_ACTIVE_CONCERN` |
+| Trigger concepts | `ENGINE_RELIABILITY`, `WAVE_CONDITIONS` |
+
+### Gemini and external calls
+
+- The evaluation harness does **not** import or invoke Gemini.
+- All evaluation is offline; no external provider calls.
+
+### Synthetic limitation
+
+These metrics measure conformance to synthetic deterministic product scenarios. They do **not** measure accident prediction, vessel safety, maritime safety outcomes, or field effectiveness.
+
+---
+
 ## Phase 1 Readiness
 
 **READY** (Phase 0 complete; Phase 1 domain foundation landed on this branch)
