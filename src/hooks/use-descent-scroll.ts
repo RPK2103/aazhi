@@ -41,7 +41,11 @@ export function useDescentScroll() {
   const anchorOpacity = useTransform(scrollYProgress, [0, 0.35], [1, 0]);
   const depthAbsorption = useTransform(scrollYProgress, [0, 1], [0, 1]);
   const surfaceLightOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-  const underwaterLightOpacity = useTransform(scrollYProgress, [0.25, 0.85], [0, 1]);
+  const underwaterLightOpacity = useTransform(
+    scrollYProgress,
+    [0.25, 0.65, 1],
+    [0, 0.48, 0.14],
+  );
   const workspaceReveal = useTransform(scrollYProgress, [0.45, 1], [0, 1]);
   const brandDescriptorOpacity = useTransform(scrollYProgress, [0.55, 0.9], [0, 1]);
   const seaRefraction = useTransform(scrollYProgress, [0, 0.5, 1], [0.4, 1, 0.6]);

@@ -37,6 +37,8 @@ void main() {
   float underwater = smoothstep(0.38, 0.78, uDepth);
   if (underwater < 0.01) discard;
 
+  float deepFade = 1.0 - smoothstep(0.76, 1.0, uDepth) * 0.82;
+
   float t = uTime * uAnimate;
   vec2 uv1 = vWorldPosition.xz * 0.035 + vec2(t * 0.018, t * 0.012);
   vec2 uv2 = vWorldPosition.xz * 0.055 + vec2(-t * 0.011, t * 0.016);
@@ -44,7 +46,7 @@ void main() {
   field = smoothstep(0.42, 0.82, field);
 
   float edgeFade = smoothstep(0.0, 0.22, vUv.y) * smoothstep(1.0, 0.55, vUv.y);
-  float alpha = field * underwater * edgeFade * 0.09;
+  float alpha = field * underwater * edgeFade * 0.09 * deepFade;
   gl_FragColor = vec4(0.45, 0.86, 0.82, alpha);
 }
 `;

@@ -26,7 +26,6 @@ export function SurfaceHero({
     <section className="surface-hero" aria-labelledby="hero-title">
       <div className="surface-hero__above" aria-hidden="true" />
       <div className="surface-hero__below" aria-hidden="true" />
-      <div className="surface-hero__water-rim" aria-hidden="true" />
 
       <div className="surface-hero__content">
         <motion.p

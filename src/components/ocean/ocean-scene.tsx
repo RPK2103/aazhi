@@ -6,18 +6,22 @@ import { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { WaterSurface } from "@/components/ocean/water-surface";
-import { LightShafts } from "@/components/ocean/light-shafts";
 import { SuspendedParticles } from "@/components/ocean/suspended-particles";
 import { MicroBubbles } from "@/components/ocean/micro-bubbles";
 import { UnderwaterCaustics } from "@/components/ocean/underwater-caustics";
 import { oceanElapsedRef } from "@/components/ocean/ocean-animation-time";
+import {
+  deepEnvironmentBlend,
+  sceneCameraY,
+  sceneCameraZ,
+  sceneLookAtY,
+} from "@/components/ocean/ocean-depth-curve";
 
 interface Props {
   depthRef: React.RefObject<number>;
   animateRef: React.RefObject<boolean>;
   reducedMotion: boolean;
   waterSegments?: number;
-  lightShaftCount?: number;
 }
 
 const SURFACE_BG = new THREE.Color("#071a28");
@@ -32,7 +36,6 @@ export function OceanScene({
   animateRef,
   reducedMotion,
   waterSegments = 96,
-  lightShaftCount = 5,
 }: Props) {
   const { scene, camera } = useThree();
   const ambientRef = useRef<THREE.AmbientLight>(null);
@@ -46,10 +49,11 @@ export function OceanScene({
 
     const depth = depthRef.current;
     const cam = camera as THREE.PerspectiveCamera;
+    const envDepth = deepEnvironmentBlend(depth);
 
-    cam.position.y = THREE.MathUtils.lerp(2.4, -3.4, depth);
-    cam.position.z = THREE.MathUtils.lerp(10.5, 7.2, depth);
-    lookAt.current.set(0, THREE.MathUtils.lerp(-0.2, -2.2, depth), 0);
+    cam.position.y = sceneCameraY(depth);
+    cam.position.z = sceneCameraZ(depth);
+    lookAt.current.set(0, sceneLookAtY(depth), 0);
     cam.lookAt(lookAt.current);
 
     if (ambientRef.current) {
@@ -58,16 +62,16 @@ export function OceanScene({
 
     const fog = scene.fog as THREE.FogExp2 | null;
     if (fog) {
-      const midDepth = smoothstep(0.2, 0.55, depth);
-      const deepDepth = smoothstep(0.45, 1, depth);
-      fog.density = THREE.MathUtils.lerp(0.012, 0.078, depth);
+      const midDepth = smoothstep(0.2, 0.55, envDepth);
+      const deepDepth = smoothstep(0.45, 1, envDepth);
+      fog.density = THREE.MathUtils.lerp(0.012, 0.078, envDepth);
       fog.color.copy(FOG_SURFACE)
         .lerp(FOG_MID, midDepth)
         .lerp(FOG_UNDERWATER, deepDepth);
     }
 
-    bgColor.current.copy(SURFACE_BG).lerp(MID_BG, smoothstep(0.15, 0.55, depth));
-    bgColor.current.lerp(UNDERWATER_BG, smoothstep(0.5, 1, depth));
+    bgColor.current.copy(SURFACE_BG).lerp(MID_BG, smoothstep(0.15, 0.55, envDepth));
+    bgColor.current.lerp(UNDERWATER_BG, smoothstep(0.5, 1, envDepth));
     scene.background = bgColor.current;
   });
 
@@ -83,11 +87,6 @@ export function OceanScene({
         waterSegments={waterSegments}
       />
       <UnderwaterCaustics depthRef={depthRef} animateRef={animateRef} />
-      <LightShafts
-        depthRef={depthRef}
-        animateRef={animateRef}
-        shaftCount={lightShaftCount}
-      />
       <SuspendedParticles
         depthRef={depthRef}
         animateRef={animateRef}

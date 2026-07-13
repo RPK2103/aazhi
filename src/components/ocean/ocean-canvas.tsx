@@ -60,7 +60,6 @@ export function OceanCanvas({ depthProgress, reducedMotion, onReady }: Props) {
         animateRef={animateRef}
         reducedMotion={reducedMotion || capabilities.reducedParticles}
         waterSegments={capabilities.waterSegments}
-        lightShaftCount={capabilities.lightShaftCount}
       />
     </Canvas>
   );
