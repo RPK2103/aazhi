@@ -6,6 +6,7 @@ import type { ActiveTripDto } from "@/application/active-trip";
 import {
   expandTimelineForDisplay,
   formatMarineDelta,
+  formatLatestManualCheck,
   formatMarineMeasurement,
   formatOperationalActionLabel,
   formatRiskPostureLabel,
@@ -93,8 +94,9 @@ export function ActiveTripWorkspace({
             {formatRiskPostureLabel(activeTrip.currentPosture)}
           </p>
           <p className="active-trip-card__meta">
-            State version {activeTrip.stateVersion} · Last evaluated{" "}
-            {formatDateTime(activeTrip.lastEvaluatedAt)}
+            State version {activeTrip.stateVersion} · RISK STATE RECORDED{" "}
+            {formatDateTime(activeTrip.lastEvaluatedAt)} · LATEST MANUAL CHECK{" "}
+            {formatLatestManualCheck(activeTrip.timeline)}
           </p>
         </motion.section>
 

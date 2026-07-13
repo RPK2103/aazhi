@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import type { RiskDelta } from "@/domain/risk";
 import {
   expandTimelineForDisplay,
+  formatLatestManualCheck,
   formatMarineDelta,
   formatOperationalActionLabel,
   formatRiskPostureLabel,
+  findLatestManualCheckAt,
   getInterpretationPresentation,
   MANUAL_MONITORING_NOTICE,
 } from "@/lib/active-trip-display";
@@ -174,6 +176,49 @@ describe("active-trip display helpers", () => {
 
   it("includes manual monitoring notice constant", () => {
     expect(MANUAL_MONITORING_NOTICE).toContain("not continuously monitoring");
+  });
+
+  it("finds the latest manual check from processing timeline events", () => {
+    const timeline = [
+      {
+        id: "evt-1",
+        type: "TRIP_CREATED" as const,
+        occurredAt: "2026-07-13T08:00:00.000Z",
+        title: "Trip recorded as active",
+        summary: "Active trip recorded in vessel risk memory.",
+      },
+      {
+        id: "evt-2",
+        type: "RISK_EVENT_PROCESSED" as const,
+        occurredAt: "2026-07-13T09:15:00.000Z",
+        title: "Marine state update processed",
+        summary: "Processed",
+      },
+      {
+        id: "evt-3",
+        type: "RISK_EVENT_PROCESSED" as const,
+        occurredAt: "2026-07-13T10:25:00.000Z",
+        title: "Marine state update processed",
+        summary: "Processed again",
+      },
+    ];
+
+    expect(findLatestManualCheckAt(timeline)).toBe("2026-07-13T10:25:00.000Z");
+    expect(formatLatestManualCheck(timeline)).toContain("2026");
+  });
+
+  it("shows not checked yet when no processing event exists", () => {
+    expect(
+      formatLatestManualCheck([
+        {
+          id: "evt-1",
+          type: "TRIP_CREATED",
+          occurredAt: "2026-07-13T08:00:00.000Z",
+          title: "Trip recorded as active",
+          summary: "Active trip recorded in vessel risk memory.",
+        },
+      ]),
+    ).toBe("Not checked yet");
   });
 
   it("expands timeline processing trace for display", () => {

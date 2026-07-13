@@ -187,3 +187,34 @@ export function formatMarineMeasurement(
 export function formatWindDirection(value: number | null): string {
   return value === null ? "Not available" : `${value}°`;
 }
+
+export function findLatestManualCheckAt(
+  entries: readonly ActiveTripTimelineEntry[],
+): string | null {
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    const entry = entries[index];
+    if (entry?.type === "RISK_EVENT_PROCESSED") {
+      return entry.occurredAt;
+    }
+  }
+  return null;
+}
+
+export function formatLatestManualCheck(
+  entries: readonly ActiveTripTimelineEntry[],
+): string {
+  const occurredAt = findLatestManualCheckAt(entries);
+  if (!occurredAt) {
+    return "Not checked yet";
+  }
+
+  const date = new Date(occurredAt);
+  if (Number.isNaN(date.getTime())) {
+    return "Not checked yet";
+  }
+
+  return new Intl.DateTimeFormat("en-IN", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
