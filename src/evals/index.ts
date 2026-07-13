@@ -63,6 +63,14 @@ export {
 } from "./persistence";
 
 export {
+  evaluateOrchestrationScenarios,
+  ORCHESTRATION_SCENARIO_FIXTURES,
+  type OrchestrationEvaluationMetrics,
+  type OrchestrationEvaluationResult,
+  type OrchestrationScenarioFixture,
+} from "./orchestration";
+
+export {
   INITIAL_RISK_SCENARIOS,
   S001_STABLE_NO_CONCERNS,
   S002_STABLE_ENGINE_CONCERN,

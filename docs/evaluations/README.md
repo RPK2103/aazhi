@@ -133,6 +133,44 @@ Phase 6.1 hardens source-to-record provenance and adds `applicabilityNote` to ev
 - The ILO Work in Fishing Convention (C188) seed record was removed because the existing `SAFETY_EQUIPMENT` taxonomy collapses occupational safety, PPE, and vessel equipment into one concept without sufficient precision.
 - Corpus precision is preferred over authority diversity or record count.
 
+## Risk Orchestration Evaluation
+
+Phase 8 evaluates the complete event-driven orchestration lifecycle using in-memory persistence and fake interpreter providers. No Neon or real Gemini calls occur.
+
+Metrics are computed by `evaluateOrchestrationScenarios` in `src/evals/orchestration/`:
+
+| Metric | Definition |
+| --- | --- |
+| Event processing success rate | Percentage of non-duplicate fixtures completing the deterministic processing lifecycle |
+| Delta preservation rate | Orchestrator deltas exactly match real `calculateRiskDeltas` output |
+| Reassessment preservation rate | Orchestrator decision equals real `evaluateReassessmentNeed` output |
+| Policy preservation rate | Orchestrator policy equals real `deriveOperationalPolicyDecision` output |
+| Selective AI invocation accuracy | Provider invocation matches `shouldInvokeRiskInterpreter` |
+| Posture transition accuracy | Result posture equals `deriveNextRiskPosture` |
+| Snapshot creation accuracy | Factual delta presence correctly determines snapshot creation |
+| Timeline trace completeness rate | Processing timeline contains all required trace fields |
+| Duplicate event reprocessing count | Must be 0 — no duplicate event performs another lifecycle |
+| Interpreter failure policy degradation accuracy | Controlled interpreter failure must not change deterministic policy/posture |
+
+**Important:** Event-processing evaluation measures conformance to synthetic orchestrated product workflows. It does **not** measure real-world maritime safety outcomes.
+
+### Phase 8 calculated results
+
+| Metric | Value |
+| --- | --- |
+| Event processing success rate | 1 |
+| Delta preservation rate | 1 |
+| Reassessment preservation rate | 1 |
+| Policy preservation rate | 1 |
+| Selective AI invocation accuracy | 1 |
+| Posture transition accuracy | 1 |
+| Snapshot creation accuracy | 1 |
+| Timeline trace completeness rate | 1 |
+| Duplicate event reprocessing count | 0 |
+| Interpreter failure policy degradation accuracy | 1 |
+
+Evaluated fixtures: S003 success, below-sensitivity update, identical marine state, provider failure, grounding provenance failure, duplicate event replay.
+
 ## Initial Scenario Suite (S001–S015)
 
 | ID | One-line description |

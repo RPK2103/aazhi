@@ -922,6 +922,105 @@ Phase 6 retrieval remains disconnected from `POST /api/assess`, `src/lib/gemini.
 
 ---
 
+## Phase 7 Vessel Risk Record Persistence
+
+Phase 7 adds PostgreSQL/Neon persistence for vessel concerns, trips, immutable risk-state snapshots, and timeline events. See `docs/persistence/README.md` for full detail.
+
+| Capability | Status |
+| --- | --- |
+| Persistent vessel concerns | Yes |
+| Active concern carry-forward | Yes |
+| Immutable versioned `RiskState` snapshots | Yes |
+| Timeline event persistence | Yes |
+| Connected to `POST /api/assess` | **No** |
+
+---
+
+## Phase 8 Event-Driven Risk Orchestrator
+
+Phase 8 implements one constrained event-processing loop that composes existing deterministic detection, policy, retrieval, and AI interpretation boundaries against the Phase 7 Vessel Risk Record.
+
+Architecture preserved:
+
+**EVENT ARRIVES → LOAD STATE → APPLY EVENT → DETECT DELTAS → REASSESS → POLICY → SELECTIVE AI → RETRIEVE → INTERPRET → POSTURE → SNAPSHOT → TIMELINE**
+
+The orchestrator is **not** a chatbot, multi-agent system, LangGraph workflow, or named-agent crew. It is a single deterministic lifecycle with selective AI invocation.
+
+### Orchestrator boundary
+
+| Path | Responsibility |
+| --- | --- |
+| `src/domain/risk/events/` | Bounded `MARINE_STATE_UPDATED` event vocabulary + pure `applyRiskEvent` |
+| `src/application/risk-orchestrator/` | `processRiskEvent`, posture transition, timeline payload validation |
+| `src/evals/orchestration/` | Synthetic orchestration evaluation harness |
+
+### Event scope (Phase 8)
+
+Exactly one `RiskEventType`: **`MARINE_STATE_UPDATED`**.
+
+Events carry normalized `MarineRiskState` only — no raw Open-Meteo JSON, `MarineContext`, Gemini artifacts, deltas, or policy data.
+
+### Processing lifecycle
+
+1. **Idempotency** — trip-scoped `RISK_EVENT_PROCESSED` timeline lookup by `sourceEventId === event.id`
+2. **Load** — latest persisted `TripRiskStateSnapshot`; fail closed if missing
+3. **Apply** — `applyRiskEvent` produces candidate factual state (no version/posture mutation)
+4. **Detect** — real `calculateRiskDeltas(previous, candidate)`
+5. **Reassess** — real `evaluateReassessmentNeed` with domain active-concern semantics
+6. **Policy** — real `deriveOperationalPolicyDecision` with explicit `processedAt`
+7. **Selective AI** — real `shouldInvokeRiskInterpreter`; skip when reassessment not required
+8. **Retrieve + interpret** — `buildRiskInterpretationInput` + injected `RiskInterpreterProvider`; interpreter failure does **not** invalidate deterministic policy
+9. **Posture** — `deriveNextRiskPosture` maps policy to posture (`NO_ACTION_REQUIRED` retains current)
+10. **Snapshot** — create immutable snapshot only when `deltas.length > 0`; no version churn on identical state
+11. **Timeline** — append one `RISK_EVENT_PROCESSED` with complete trace payload
+12. **Result** — serializable `RiskEventProcessingResult`
+
+### Interpretation status vocabulary
+
+`SKIPPED`, `SUCCEEDED`, `FAILED` with bounded failure reasons: `PROVIDER_FAILURE`, `INVALID_INTERPRETATION_OUTPUT`, `GROUNDING_PROVENANCE_FAILURE`, `UNKNOWN_INTERPRETER_FAILURE`.
+
+### S003 version 1 → version 2 lifecycle
+
+| Check | Result |
+| --- | --- |
+| Previous version | 1 (`CAUTION`, wave 0.8 m, wind 13 km/h, `ENGINE_RELIABILITY` OPEN) |
+| Event | `evt-s003-marine-001` / `MARINE_STATE_UPDATED` |
+| Wave delta | `+0.7 m`, reassessment-relevant |
+| Wind delta | `+5 km/h`, not reassessment-relevant |
+| Reassessment | `MATERIAL_ENVIRONMENTAL_CHANGE_WITH_ACTIVE_CONCERN` |
+| Policy | `COORDINATOR_REVIEW_REQUIRED` |
+| Interpreter | Invoked once; `SUCCEEDED` with grounded safety records |
+| Posture | `CAUTION` → `COORDINATOR_REVIEW_REQUIRED` |
+| New snapshot | Version 2; version 1 remains immutable |
+| Duplicate replay | Detected; no version 3, no second interpreter call |
+
+### Idempotency and no-version-churn behaviour
+
+- Duplicate `event.id` returns prior result reconstructed from validated timeline payload; malformed payloads fail closed
+- Identical marine state: `deltas: []`, no snapshot, interpreter skipped; one trace for the unique event
+- Below-sensitivity change: factual snapshot persists, reassessment false, interpreter skipped
+
+### Current capability gaps (unchanged)
+
+Phase 8 does not model check-ins, official alerts, GPS/AIS, trip-duration comparison, or automated marine monitoring. The orchestrator remains **disconnected** from `POST /api/assess` and the assessment UI.
+
+### Phase 8 orchestration metrics
+
+| Metric | Value |
+| --- | --- |
+| Event processing success rate | 1 |
+| Delta preservation rate | 1 |
+| Reassessment preservation rate | 1 |
+| Policy preservation rate | 1 |
+| Selective AI invocation accuracy | 1 |
+| Posture transition accuracy | 1 |
+| Snapshot creation accuracy | 1 |
+| Timeline trace completeness rate | 1 |
+| Duplicate event reprocessing count | 0 |
+| Interpreter failure policy degradation accuracy | 1 |
+
+---
+
 ## Phase 1 Readiness
 
 **READY** (Phase 0 complete; Phase 1 domain foundation landed on this branch)

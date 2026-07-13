@@ -5,10 +5,24 @@ import type {
 } from "./risk-interpreter-types";
 import { parseRiskInterpretationResponse } from "./risk-interpreter-schema";
 
+export const RISK_INTERPRETATION_FAILURE_STAGES = [
+  "INTERPRETER_PROVIDER",
+  "INTERPRETER_PARSE",
+  "INTERPRETER_ZOD_VALIDATION",
+  "INTERPRETER_GROUNDING_VALIDATION",
+  "UNKNOWN",
+] as const;
+
+export type RiskInterpretationFailureStage =
+  (typeof RISK_INTERPRETATION_FAILURE_STAGES)[number];
+
 export class RiskInterpretationError extends Error {
-  constructor() {
+  readonly failureStage: RiskInterpretationFailureStage;
+
+  constructor(failureStage: RiskInterpretationFailureStage = "UNKNOWN") {
     super("The risk interpretation could not be generated.");
     this.name = "RiskInterpretationError";
+    this.failureStage = failureStage;
   }
 }
 
@@ -74,27 +88,27 @@ function validateGroundingSources(
     const record = contextById.get(source.recordId);
     if (record === undefined) {
       logGroundingValidationFailure(source, "unknown_record_id");
-      throw new RiskInterpretationError();
+      throw new RiskInterpretationError("INTERPRETER_GROUNDING_VALIDATION");
     }
 
     if (source.authority !== record.authority) {
       logGroundingValidationFailure(source, "fabricated_authority");
-      throw new RiskInterpretationError();
+      throw new RiskInterpretationError("INTERPRETER_GROUNDING_VALIDATION");
     }
 
     if (source.documentTitle !== record.documentTitle) {
       logGroundingValidationFailure(source, "fabricated_document_title");
-      throw new RiskInterpretationError();
+      throw new RiskInterpretationError("INTERPRETER_GROUNDING_VALIDATION");
     }
 
     if (source.sourceLocator !== record.sourceLocator) {
       logGroundingValidationFailure(source, "fabricated_source_locator");
-      throw new RiskInterpretationError();
+      throw new RiskInterpretationError("INTERPRETER_GROUNDING_VALIDATION");
     }
 
     if (source.sourceUrl !== record.sourceUrl) {
       logGroundingValidationFailure(source, "fabricated_source_url");
-      throw new RiskInterpretationError();
+      throw new RiskInterpretationError("INTERPRETER_GROUNDING_VALIDATION");
     }
   }
 }
@@ -109,7 +123,7 @@ function validateProviderOutput(
   const parsed = parseRiskInterpretationResponse(responseText);
   if (!parsed.success && parsed.stage === "INTERPRETER_PARSE") {
     logInterpreterFailure("INTERPRETER_PARSE", parsed.error);
-    throw new RiskInterpretationError();
+    throw new RiskInterpretationError("INTERPRETER_PARSE");
   }
   if (!parsed.success) {
     console.error("[AAZHI_RISK_INTERPRETER_FAILURE]", {
@@ -118,7 +132,7 @@ function validateProviderOutput(
       issues: parsed.issues,
       responseKeys: parsed.responseKeys,
     });
-    throw new RiskInterpretationError();
+    throw new RiskInterpretationError("INTERPRETER_ZOD_VALIDATION");
   }
 
   try {
@@ -128,7 +142,7 @@ function validateProviderOutput(
       throw error;
     }
     logInterpreterFailure("INTERPRETER_GROUNDING_VALIDATION", error);
-    throw new RiskInterpretationError();
+    throw new RiskInterpretationError("INTERPRETER_GROUNDING_VALIDATION");
   }
 
   return parsed.data;
@@ -147,7 +161,7 @@ export async function interpretRiskChange(
     raw = await provider.interpret(input);
   } catch (error) {
     logInterpreterFailure("INTERPRETER_PROVIDER", error);
-    throw new RiskInterpretationError();
+    throw new RiskInterpretationError("INTERPRETER_PROVIDER");
   }
 
   return validateProviderOutput(raw, input);

@@ -1,11 +1,11 @@
 /**
- * Bounded timeline event vocabulary for Phase 7 persistence.
- * Phase 8 will extend event modelling; do not add future event types here yet.
+ * Bounded timeline event vocabulary for persistence and orchestration tracing.
  */
 export const TIMELINE_EVENT_TYPES = [
   "TRIP_CREATED",
   "CONCERN_CARRIED_FORWARD",
   "RISK_STATE_SNAPSHOT_CREATED",
+  "RISK_EVENT_PROCESSED",
 ] as const;
 
 export type TimelineEventType = (typeof TIMELINE_EVENT_TYPES)[number];

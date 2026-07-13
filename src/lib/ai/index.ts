@@ -27,6 +27,8 @@ export {
 export {
   interpretRiskChange,
   RiskInterpretationError,
+  RISK_INTERPRETATION_FAILURE_STAGES,
+  type RiskInterpretationFailureStage,
   type RiskInterpreterProvider,
 } from "./risk-interpreter";
 

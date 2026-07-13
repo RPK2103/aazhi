@@ -38,6 +38,17 @@ export {
 } from "./risk-state";
 
 export {
+  RISK_EVENT_TYPES,
+  isRiskEventType,
+  isMarineStateUpdatedEvent,
+  applyRiskEvent,
+  RiskEventTripMismatchError,
+  type RiskEventType,
+  type MarineStateUpdatedEvent,
+  type RiskEvent,
+} from "./events";
+
+export {
   RISK_DELTA_TYPES,
   MARINE_MEASUREMENTS,
   MARINE_MEASUREMENT_ORDER,

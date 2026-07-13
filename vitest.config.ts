@@ -16,6 +16,7 @@ export default defineConfig({
       include: [
         "src/app/api/assess/route.ts",
         "src/application/persistence/**/*.ts",
+        "src/application/risk-orchestrator/**/*.ts",
         "src/application/vessel-risk-record/**/*.ts",
         "src/domain/risk/**/*.ts",
         "src/domain/policy/**/*.ts",
