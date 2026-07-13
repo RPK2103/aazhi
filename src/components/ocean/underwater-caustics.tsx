@@ -9,6 +9,7 @@ import {
   createCausticUniforms,
 } from "@/components/ocean/underwater-caustics-shader";
 import { oceanElapsedRef } from "@/components/ocean/ocean-animation-time";
+import { sceneCausticsY } from "@/components/ocean/ocean-depth-curve";
 
 interface Props {
   depthRef: React.RefObject<number>;
@@ -28,7 +29,7 @@ export function UnderwaterCaustics({ depthRef, animateRef }: Props) {
     if (animateRef.current) {
       materialRef.current.uniforms.uTime.value = oceanElapsedRef.current;
     }
-    meshRef.current.position.y = THREE.MathUtils.lerp(2.8, 1.2, depth);
+    meshRef.current.position.y = sceneCausticsY(depth);
     meshRef.current.visible = depth > 0.32;
   });
 

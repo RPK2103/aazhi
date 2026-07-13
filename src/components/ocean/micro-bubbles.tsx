@@ -104,7 +104,7 @@ export function MicroBubbles({
     if (animateRef.current) {
       materialRef.current.uniforms.uTime.value = oceanElapsedRef.current;
     }
-    pointsRef.current.position.y = THREE.MathUtils.lerp(0.5, -2.2, depth);
+    pointsRef.current.position.y = THREE.MathUtils.lerp(0.5, -3.2, depth);
   });
 
   return (

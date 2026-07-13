@@ -9,6 +9,7 @@ import {
   waterVertexShader,
 } from "@/components/ocean/water-shader";
 import { oceanElapsedRef } from "@/components/ocean/ocean-animation-time";
+import { sceneWaterPlaneY } from "@/components/ocean/ocean-depth-curve";
 
 interface Props {
   depthRef: React.RefObject<number>;
@@ -31,7 +32,7 @@ export function WaterSurface({ depthRef, animateRef, waterSegments = 96 }: Props
       materialRef.current.uniforms.uAnimate.value = 0.15;
     }
     materialRef.current.uniforms.uDepth.value = depth;
-    meshRef.current.position.y = THREE.MathUtils.lerp(0.2, 4.8, depth);
+    meshRef.current.position.y = sceneWaterPlaneY(depth);
   });
 
   return (

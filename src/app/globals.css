@@ -1181,10 +1181,10 @@ footer {
 
 .ocean-layer--underwater-rays {
   background:
-    radial-gradient(ellipse 65% 45% at 50% 0%, rgba(79, 209, 197, 0.06), transparent 72%),
-    radial-gradient(ellipse 35% 28% at 28% 4%, rgba(79, 209, 197, 0.03), transparent 62%),
-    radial-gradient(ellipse 30% 24% at 74% 6%, rgba(79, 209, 197, 0.025), transparent 58%);
-  mask-image: radial-gradient(ellipse 100% 85% at 50% 0%, black 0%, transparent 78%);
+    radial-gradient(ellipse 85% 20% at 50% 0%, rgba(79, 209, 197, 0.05), transparent 90%),
+    radial-gradient(ellipse 30% 12% at 28% 2%, rgba(79, 209, 197, 0.025), transparent 82%),
+    radial-gradient(ellipse 28% 10% at 74% 3%, rgba(79, 209, 197, 0.02), transparent 80%);
+  mask-image: radial-gradient(ellipse 100% 24% at 50% 0%, black 0%, transparent 94%);
 }
 
 .ocean-layer--surface-glow {
@@ -1345,23 +1345,6 @@ footer {
 .surface-hero__surface-gap {
   height: clamp(48px, 8vh, 88px);
   margin: calc(var(--space-unit) * 1.5) 0;
-}
-
-.surface-hero__water-rim {
-  position: absolute;
-  left: 8%;
-  right: 8%;
-  top: 54%;
-  height: 2px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(111, 238, 225, 0.35),
-    transparent
-  );
-  filter: blur(1px);
-  opacity: 0.45;
-  pointer-events: none;
 }
 
 .surface-hero__support {

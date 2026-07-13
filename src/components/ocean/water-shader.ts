@@ -11,10 +11,10 @@ varying float vElevation;
 varying float vWaveSlope;
 
 float waveHeight(vec2 p, float t) {
-  float w1 = sin(dot(p, vec2(0.082, 0.031)) + t * 0.17) * 0.072;
-  float w2 = sin(dot(p, vec2(-0.054, 0.098)) - t * 0.23) * 0.048;
-  float w3 = sin(dot(p, vec2(0.121, -0.067)) + t * 0.31) * 0.026;
-  float w4 = sin(dot(p, vec2(0.173, 0.142)) - t * 0.43 + sin(p.x * 0.07) * 0.55) * 0.014;
+  float w1 = sin(dot(p, vec2(0.082, 0.031)) + t * 0.20) * 0.088;
+  float w2 = sin(dot(p, vec2(-0.054, 0.098)) - t * 0.26) * 0.055;
+  float w3 = sin(dot(p, vec2(0.121, -0.067)) + t * 0.35) * 0.029;
+  float w4 = sin(dot(p, vec2(0.173, 0.142)) - t * 0.47 + sin(p.x * 0.07) * 0.55) * 0.014;
   return w1 + w2 + w3 + w4;
 }
 
@@ -81,33 +81,34 @@ void main() {
   float underwaterZone = smoothstep(0.42, 0.82, uDepth);
 
   float t = uTime * uAnimate;
-  vec2 flowUv = vWorldPosition.xz * 0.08 + vec2(t * 0.04, -t * 0.027);
-  vec2 flowUv2 = vWorldPosition.xz * 0.13 + vec2(-t * 0.031, t * 0.019);
+  vec2 flowUv = vWorldPosition.xz * 0.08 + vec2(t * 0.05, -t * 0.034);
+  vec2 flowUv2 = vWorldPosition.xz * 0.13 + vec2(-t * 0.038, t * 0.024);
   float highlightFlow = noise(flowUv) * 0.55 + noise(flowUv2) * 0.45;
   float crest = smoothstep(0.008, 0.065, vElevation + vWaveSlope * 0.04);
 
   vec3 color = mix(uTroughColor, uMidColor, smoothstep(-0.02, 0.05, vElevation) + fresnel * 0.18);
   color = mix(color, uBodyColor, fresnel * 0.28 + crest * 0.12);
 
-  float highlightStrength = crest * 0.14 + highlightFlow * 0.08 + fresnel * 0.1;
+  float highlightStrength = crest * 0.16 + highlightFlow * 0.11 + fresnel * 0.1;
   highlightStrength += surfaceZone * 0.12 + crossingZone * 0.08;
   color += uHighlightColor * highlightStrength;
 
   float spec = pow(fresnel, 5.0) * (0.06 + crest * 0.08 + surfaceZone * 0.05);
   color += uSpecularColor * spec;
 
-  bool viewFromBelow = cameraPosition.y < vWorldPosition.y - 0.05;
-  if (viewFromBelow) {
-    float ceilingGlow = crest * 0.22 + highlightFlow * 0.14 + fresnel * 0.16;
-    ceilingGlow *= underwaterZone * 0.85 + crossingZone * 0.35;
-    color = mix(color, uBodyColor + uHighlightColor * 0.35, ceilingGlow);
-    color += uHighlightColor * ceilingGlow * 0.35;
-  }
-
   float alpha = mix(0.9, 0.72, uDepth);
   alpha = mix(alpha, 0.82, underwaterZone * 0.25);
+
+  bool viewFromBelow = cameraPosition.y < vWorldPosition.y - 0.05;
   if (viewFromBelow) {
+    float distantSurface = smoothstep(0.58, 0.92, uDepth);
+    float ceilingGlow = crest * 0.22 + highlightFlow * 0.14 + fresnel * 0.16;
+    ceilingGlow *= underwaterZone * 0.85 + crossingZone * 0.35;
+    ceilingGlow *= 1.0 - distantSurface * 0.88;
+    color = mix(color, uBodyColor + uHighlightColor * 0.35, ceilingGlow);
+    color += uHighlightColor * ceilingGlow * 0.35;
     alpha = mix(0.35, 0.62, underwaterZone);
+    alpha *= mix(1.0, 0.1, distantSurface);
   }
 
   gl_FragColor = vec4(color, alpha);

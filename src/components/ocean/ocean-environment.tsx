@@ -40,6 +40,11 @@ export function OceanEnvironment({
   const [webglReady, setWebglReady] = useState(false);
   const abyssBlend = useTransform(depthAbsorption, [0, 1], [0, 1]);
   const surfaceGlowY = useTransform(depthAbsorption, [0, 1], [0, -32]);
+  const surfaceGlowOpacity = useTransform(
+    depthAbsorption,
+    [0, 0.35, 0.7, 1],
+    [1, 0.35, 0.08, 0.03],
+  );
 
   const handleWebglReady = useCallback(() => {
     setWebglReady(true);
@@ -62,7 +67,7 @@ export function OceanEnvironment({
         />
         <motion.div
           className="ocean-layer ocean-layer--surface-glow"
-          style={{ y: surfaceGlowY }}
+          style={{ y: surfaceGlowY, opacity: surfaceGlowOpacity }}
         />
         <div
           className={`ocean-layer ocean-layer--particles${isVisible ? "" : " is-paused"}`}

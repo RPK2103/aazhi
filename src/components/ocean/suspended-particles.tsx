@@ -105,7 +105,7 @@ export function SuspendedParticles({
     if (animateRef.current) {
       materialRef.current.uniforms.uTime.value = oceanElapsedRef.current;
     }
-    pointsRef.current.position.y = THREE.MathUtils.lerp(1.2, -1.5, depth);
+    pointsRef.current.position.y = THREE.MathUtils.lerp(1.2, -2.8, depth);
   });
 
   return (
