@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Vessel {
+  id                    String   @id
+  displayName           String
+  registrationReference String?
+  vesselType            String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  concerns VesselConcern[]
+  trips    Trip[]
+}
+
+model VesselConcern {
+  id                   String    @id
+  vesselId             String
+  concept              String
+  summary              String
+  status               String
+  reportedAt           DateTime
+  resolutionReportedAt DateTime?
+  resolvedAt           DateTime?
+  dismissedAt          DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  vessel Vessel @relation(fields: [vesselId], references: [id], onDelete: Cascade)
+
+  @@index([vesselId])
+  @@index([vesselId, status])
+}
+
+model Trip {
+  id                   String    @id
+  vesselId             String
+  crewCount            Int
+  plannedDurationHours Int
+  status               String
+  startedAt            DateTime?
+  expectedReturnAt     DateTime?
+  endedAt              DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  vessel         Vessel                  @relation(fields: [vesselId], references: [id], onDelete: Cascade)
+  snapshots      TripRiskStateSnapshot[]
+  timelineEvents TimelineEvent[]
+
+  @@index([vesselId])
+}
+
+model TripRiskStateSnapshot {
+  id              String   @id
+  tripId          String
+  version         Int
+  posture         String
+  stateJson       Json
+  lastEvaluatedAt DateTime
+  createdAt       DateTime @default(now())
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@unique([tripId, version])
+  @@index([tripId])
+}
+
+model TimelineEvent {
+  id         String   @id
+  tripId     String
+  type       String
+  payload    Json
+  occurredAt DateTime
+  createdAt  DateTime @default(now())
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([tripId, occurredAt])
+}

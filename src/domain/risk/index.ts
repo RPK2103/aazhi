@@ -9,6 +9,7 @@ export {
   ACTIVE_CONCERN_STATUSES,
   canTransitionConcernStatus,
   isActiveConcern,
+  isConcernStatus,
   type ConcernStatus,
   type ActiveConcernStatus,
   type VesselConcern,
@@ -18,6 +19,7 @@ export type { MarineRiskState } from "./marine-risk-state";
 
 export {
   TRIP_STATUSES,
+  isTripStatus,
   type TripStatus,
   type TripContext,
 } from "./trip-context";
@@ -25,6 +27,7 @@ export {
 export {
   RISK_POSTURES,
   DEPARTURE_POSTURES,
+  isRiskPosture,
   type RiskPosture,
   type DeparturePosture,
 } from "./risk-posture";

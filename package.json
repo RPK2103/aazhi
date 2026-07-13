@@ -10,10 +10,15 @@
     "test": "vitest run",
     "test:run": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "prisma:validate": "prisma validate",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev"
   },
   "dependencies": {
     "@google/genai": "latest",
+    "@prisma/adapter-neon": "^7.8.0",
+    "@prisma/client": "^7.8.0",
     "@react-three/fiber": "^9.6.1",
     "motion": "^12.42.2",
     "next": "latest",
@@ -29,8 +34,10 @@
     "@types/react-dom": "latest",
     "@types/three": "^0.185.1",
     "@vitest/coverage-v8": "^4.1.10",
+    "dotenv": "^17.4.2",
     "eslint": "latest",
     "eslint-config-next": "latest",
+    "prisma": "^7.8.0",
     "tailwindcss": "latest",
     "typescript": "latest",
     "vitest": "^4.1.10"

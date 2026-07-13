@@ -54,6 +54,15 @@ export {
 } from "./retrieval";
 
 export {
+  evaluatePersistenceScenarios,
+  PERSISTENCE_SCENARIO_FIXTURES,
+  buildReferenceRiskState,
+  type PersistenceScenarioFixture,
+  type PersistenceEvaluationMetrics,
+  type PersistenceEvaluationResult,
+} from "./persistence";
+
+export {
   INITIAL_RISK_SCENARIOS,
   S001_STABLE_NO_CONCERNS,
   S002_STABLE_ENGINE_CONCERN,

@@ -15,6 +15,12 @@ export const CONCERN_STATUSES = [
 
 export type ConcernStatus = (typeof CONCERN_STATUSES)[number];
 
+const CONCERN_STATUS_SET: ReadonlySet<string> = new Set(CONCERN_STATUSES);
+
+export function isConcernStatus(value: string): value is ConcernStatus {
+  return CONCERN_STATUS_SET.has(value);
+}
+
 /** Statuses that keep a concern in the active operational set. */
 export const ACTIVE_CONCERN_STATUSES = ["OPEN", "RESOLUTION_REPORTED"] as const;
 

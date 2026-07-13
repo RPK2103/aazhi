@@ -14,6 +14,12 @@ export const RISK_POSTURES = [
 
 export type RiskPosture = (typeof RISK_POSTURES)[number];
 
+const RISK_POSTURE_SET: ReadonlySet<string> = new Set(RISK_POSTURES);
+
+export function isRiskPosture(value: string): value is RiskPosture {
+  return RISK_POSTURE_SET.has(value);
+}
+
 /**
  * Future departure-decision posture vocabulary.
  *

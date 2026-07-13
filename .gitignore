@@ -12,6 +12,8 @@
 # local environment files
 .env*
 !.env.example
+.env
+.env.local
 
 # debug
 npm-debug.log*
@@ -23,6 +25,12 @@ pnpm-debug.log*
 .DS_Store
 *.pem
 
-# TypeScript
-*.tsbuildinfo
-next-env.d.ts
+
+# Prisma generated client
+/src/generated/prisma
+
+# Local agent / Neon tooling
+.agents/
+.neon
+.neon/
+skills-lock.json
