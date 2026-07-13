@@ -56,6 +56,9 @@ export function AazhiPage() {
       <footer className="aazhi-page__footer">
         <span>AAZHI · PRE-DEPARTURE READINESS ASSISTANCE</span>
         <span>MARINE DATA: OPEN-METEO</span>
+        <a href="/coordinator" className="aazhi-page__coordinator-link">
+          COORDINATOR VIEW
+        </a>
       </footer>
     </div>
   );

@@ -43,4 +43,12 @@ export class PrismaTripRepository implements TripRepository {
     const record = await getPrismaClient().trip.findUnique({ where: { id } });
     return record ? mapPersistedTrip(record) : null;
   }
+
+  async listActiveTrips() {
+    const records = await getPrismaClient().trip.findMany({
+      where: { status: "ACTIVE" },
+      orderBy: [{ startedAt: "asc" }, { id: "asc" }],
+    });
+    return records.map(mapPersistedTrip);
+  }
 }

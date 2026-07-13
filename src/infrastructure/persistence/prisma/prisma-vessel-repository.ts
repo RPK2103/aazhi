@@ -39,4 +39,15 @@ export class PrismaVesselRepository implements VesselRepository {
     const record = await getPrismaClient().vessel.findUnique({ where: { id } });
     return record ? mapPersistedVessel(record) : null;
   }
+
+  async findByIds(ids: readonly string[]) {
+    if (ids.length === 0) {
+      return [];
+    }
+
+    const records = await getPrismaClient().vessel.findMany({
+      where: { id: { in: [...ids] } },
+    });
+    return records.map(mapPersistedVessel);
+  }
 }

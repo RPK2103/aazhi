@@ -1106,6 +1106,107 @@ See [docs/product/active-trip-workflow.md](./product/active-trip-workflow.md).
 
 ---
 
+## Phase 10 Coordinator Attention Projection
+
+Phase 10 adds a shore-side **Coordinator View** that answers: **which active trips need attention now, and why?**
+
+### Coordinator product question
+
+```text
+ACTIVE TRIPS IN PERSISTENT STORAGE
+↓
+LOAD LATEST RISK STATE PER TRIP
+↓
+LOAD VALIDATED TIMELINE
+↓
+LOAD ACTIVE CONCERNS FROM LATEST RISK STATE
+↓
+DERIVE ATTENTION CLASSIFICATION DETERMINISTICALLY
+↓
+DERIVE ATTENTION BASIS
+↓
+ORDER TRIPS DETERMINISTICALLY
+↓
+RETURN UI-SAFE COORDINATOR DTO
+↓
+RENDER /coordinator
+```
+
+### Deterministic attention classification
+
+| RiskPosture | Attention group |
+| --- | --- |
+| `OFFICIAL_ALERT_PRIORITY` | `ATTENTION_REQUIRED` |
+| `COORDINATOR_REVIEW_REQUIRED` | `ATTENTION_REQUIRED` |
+| `REASSESSMENT_REQUIRED` | `ATTENTION_REQUIRED` |
+| `CAUTION` | `WATCH` |
+| `BASELINE` | `STABLE` |
+
+Posture priority ordering (highest first): `OFFICIAL_ALERT_PRIORITY` → `COORDINATOR_REVIEW_REQUIRED` → `REASSESSMENT_REQUIRED` → `CAUTION` → `BASELINE`.
+
+Gemini does **not** rank trips, classify attention, or derive policy.
+
+### Attention-relevant processing trace
+
+A `RISK_EVENT_PROCESSED` trace is attention-relevant when at least one is true:
+
+- `reassessmentDecision.required === true`
+- `policyDecision.action !== NO_ACTION_REQUIRED`
+- `previousPosture !== currentPosture`
+
+A latest `NO_MATERIAL_CHANGE` / `NO_ACTION_REQUIRED` trace alone is **not** attention-relevant.
+
+### Latest trace vs attention-basis trace
+
+- **Latest manual check** — `occurredAt` of the latest validated `RISK_EVENT_PROCESSED` event (may be irrelevant).
+- **Latest policy action** — policy action from the latest validated processing trace.
+- **Attention basis** — latest **attention-relevant** processing trace, or `PERSISTED_STATE` when posture requires attention/watch but no relevant trace exists.
+- **Attention-basis policy action** — policy from the selected attention-relevant trace; `null` for `PERSISTED_STATE`.
+
+Example: trip remains `REASSESSMENT_REQUIRED` after a later `NO_MATERIAL_CHANGE` check. Coordinator still shows `ATTENTION_REQUIRED` with `PERSISTED_STATE` basis; latest policy may be `NO_ACTION_REQUIRED` without implying posture clearance.
+
+### Attention basis kinds
+
+| Kind | When used |
+| --- | --- |
+| `PROCESSING_TRACE` | Latest attention-relevant trace exists |
+| `PERSISTED_STATE` | Posture requires attention/watch but no relevant trace; no fabricated deltas, policy, or interpretation |
+
+### Active concern source
+
+Active concerns come from **latest RiskState.activeConcerns** only. `OPEN` and `RESOLUTION_REPORTED` remain active context. `RESOLVED` / `DISMISSED` absent from latest state are not displayed.
+
+### Deterministic sorting
+
+`sortCoordinatorAttentionTrips` order:
+
+1. RiskPosture attention priority (highest first)
+2. Latest attention-relevant trace `occurredAt` (newest first; trips without relevant trace sort after those with one within same posture)
+3. `trip.startedAt` (oldest first)
+4. `tripId` ascending lexical tie-break
+
+### APIs and routes
+
+| Route | Purpose |
+| --- | --- |
+| `GET /api/risk/coordinator/attention` | Coordinator attention DTO |
+| `/coordinator` | Coordinator View UI |
+
+### Server composition
+
+`createCoordinatorAttentionService` in `src/server/risk-intelligence/` injects Prisma persistence ports only. No Gemini, marine provider, safety corpus, or risk orchestrator.
+
+### Coordinator MVP limitations
+
+- No authentication or organizational tenancy
+- No continuous monitoring, polling, or automatic marine refresh
+- No fleet map, GPS, AIS, or notifications
+- Coordinator ordering and attention groups are read projections over persisted intelligence — not persisted separately
+
+See [docs/product/coordinator-attention-view.md](./product/coordinator-attention-view.md).
+
+---
+
 ## Phase 1 Readiness
 
 **READY** (Phase 0 complete; Phase 1 domain foundation landed on this branch)

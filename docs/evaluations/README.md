@@ -206,3 +206,22 @@ const suite = evaluateRiskScenarioSuite(INITIAL_RISK_SCENARIOS);
 - Scenarios use deterministic synthetic timestamps and stable IDs.
 - No external provider calls are made during evaluation.
 - Scenario conformance does not imply real-world safety accuracy or field effectiveness.
+
+## Coordinator Attention Evaluation
+
+Phase 10 evaluates deterministic coordinator attention projection. Metrics are computed by `evaluateCoordinatorAttentionScenarios` in `src/evals/coordinator/`:
+
+| Metric | Definition |
+| --- | --- |
+| Attention classification accuracy | Fraction of scenarios where attention group matches expectation |
+| Attention ordering accuracy | Fraction of scenarios where deterministic ordering matches expectation |
+| Attention basis selection accuracy | Fraction of scenarios where attention basis kind matches expectation |
+| Latest manual check selection accuracy | Fraction of scenarios where latest manual check timestamp matches expectation |
+| Latest policy action preservation rate | Fraction of scenarios where latest policy action matches expectation |
+| Attention basis policy preservation rate | Fraction of scenarios where attention-basis policy action matches expectation |
+| Active concern preservation rate | Fraction of scenarios where active concern statuses match expectation |
+| Timeline validation rate | Fraction of scenarios where timeline validation succeeds |
+| AI ranking invocation count | Must remain 0 |
+| Failed interpretation fabrication count | Must remain 0 |
+
+Coordinator evaluation measures conformance to synthetic attention-projection workflows. It does not measure real-world maritime safety outcomes or operational effectiveness.

@@ -44,6 +44,13 @@ export class InMemoryVesselRepository implements VesselRepository {
   async findById(id: string): Promise<PersistedVessel | null> {
     return this.records.get(id) ?? null;
   }
+
+  async findByIds(ids: readonly string[]): Promise<PersistedVessel[]> {
+    return ids
+      .map((id) => this.records.get(id))
+      .filter((record): record is PersistedVessel => record !== undefined)
+      .map((record) => ({ ...record }));
+  }
 }
 
 export class InMemoryVesselConcernRepository implements VesselConcernRepository {
@@ -122,6 +129,16 @@ export class InMemoryTripRepository implements TripRepository {
 
   async findById(id: string): Promise<PersistedTrip | null> {
     return this.records.get(id) ?? null;
+  }
+
+  async listActiveTrips(): Promise<PersistedTrip[]> {
+    return [...this.records.values()]
+      .filter((record) => record.status === "ACTIVE")
+      .sort((a, b) => {
+        const startedCompare = (a.startedAt ?? "").localeCompare(b.startedAt ?? "");
+        return startedCompare !== 0 ? startedCompare : a.id.localeCompare(b.id);
+      })
+      .map((record) => ({ ...record }));
   }
 }
 

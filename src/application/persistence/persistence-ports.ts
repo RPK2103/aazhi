@@ -52,6 +52,7 @@ export interface VesselRepository {
     timestamps: { createdAt: string; updatedAt: string },
   ): Promise<PersistedVessel>;
   findById(id: string): Promise<PersistedVessel | null>;
+  findByIds(ids: readonly string[]): Promise<PersistedVessel[]>;
 }
 
 export interface VesselConcernRepository {
@@ -73,6 +74,7 @@ export interface TripRepository {
     timestamps: { createdAt: string; updatedAt: string },
   ): Promise<PersistedTrip>;
   findById(id: string): Promise<PersistedTrip | null>;
+  listActiveTrips(): Promise<PersistedTrip[]>;
 }
 
 export interface TripRiskStateRepository {
