@@ -2,6 +2,7 @@ import {
   canTransitionConcernStatus,
   isActiveConcern,
   isTripStatus,
+  validateMarineReferenceLocation,
   type ConcernStatus,
   type MarineRiskState,
   type RiskPosture,
@@ -205,6 +206,11 @@ export class VesselRiskRecordService {
       crewCount: trip.crewCount,
       plannedDurationHours: trip.plannedDurationHours,
       tripStatus: trip.status,
+      marineReferenceLocation: validateMarineReferenceLocation({
+        latitude: trip.marineReferenceLatitude,
+        longitude: trip.marineReferenceLongitude,
+        label: trip.marineReferenceLabel,
+      }),
       startedAt: trip.startedAt ?? undefined,
       expectedReturnAt: trip.expectedReturnAt ?? undefined,
       endedAt: trip.endedAt ?? undefined,
@@ -295,5 +301,21 @@ export class VesselRiskRecordService {
     }
 
     return this.repos.timeline.append(input);
+  }
+
+  async findVesselById(vesselId: string): Promise<PersistedVessel | null> {
+    return this.repos.vessels.findById(vesselId);
+  }
+
+  async findTripById(tripId: string): Promise<PersistedTrip | null> {
+    return this.repos.trips.findById(tripId);
+  }
+
+  async loadTripTimeline(tripId: string): Promise<TimelineEventRecord[]> {
+    const trip = await this.repos.trips.findById(tripId);
+    if (!trip) {
+      throw new TripNotFoundError(tripId);
+    }
+    return this.repos.timeline.findByTripId(tripId);
   }
 }

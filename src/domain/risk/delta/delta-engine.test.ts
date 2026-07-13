@@ -31,6 +31,11 @@ function tripContext(): TripContext {
     crewCount: 5,
     plannedDurationHours: 8,
     tripStatus: "ACTIVE",
+    marineReferenceLocation: {
+      latitude: 13.125,
+      longitude: 80.3,
+      label: "Chennai / Kasimedu",
+    },
   };
 }
 

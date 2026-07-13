@@ -18,6 +18,12 @@ export {
 export type { MarineRiskState } from "./marine-risk-state";
 
 export {
+  validateMarineReferenceLocation,
+  InvalidMarineReferenceLocationError,
+  type MarineReferenceLocation,
+} from "./marine-reference-location";
+
+export {
   TRIP_STATUSES,
   isTripStatus,
   type TripStatus,

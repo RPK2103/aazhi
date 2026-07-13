@@ -9,6 +9,7 @@ import {
   riskStatesAreEquivalent,
 } from "@/application/persistence";
 import { createInMemoryPersistenceRepositories } from "@/test-support/persistence";
+import { TEST_MARINE_REFERENCE } from "@/test-support/persistence/test-marine-reference";
 
 const DAY1_CREATED_AT = "2026-07-12T05:00:00.000Z";
 const DAY1_UPDATED_AT = "2026-07-12T05:00:00.000Z";
@@ -240,6 +241,7 @@ describe("VesselRiskRecordService", () => {
         crewCount: 5,
         plannedDurationHours: 8,
         status: "ACTIVE",
+        ...TEST_MARINE_REFERENCE,
       },
       { createdAt: DAY2_CREATED_AT, updatedAt: DAY2_UPDATED_AT },
       {
@@ -319,6 +321,7 @@ describe("VesselRiskRecordService", () => {
         crewCount: 5,
         plannedDurationHours: 8,
         status: "ACTIVE",
+        ...TEST_MARINE_REFERENCE,
       },
       { createdAt: DAY2_CREATED_AT, updatedAt: DAY2_UPDATED_AT },
       {
@@ -372,6 +375,7 @@ describe("VesselRiskRecordService", () => {
         crewCount: 5,
         plannedDurationHours: 8,
         status: "PLANNED",
+        ...TEST_MARINE_REFERENCE,
       },
       { createdAt: DAY2_CREATED_AT, updatedAt: DAY2_UPDATED_AT },
       {
@@ -434,6 +438,7 @@ describe("S003 persistence workflow", () => {
         crewCount: 5,
         plannedDurationHours: 8,
         status: "ACTIVE",
+        ...TEST_MARINE_REFERENCE,
       },
       { createdAt: DAY2_CREATED_AT, updatedAt: DAY2_UPDATED_AT },
       {

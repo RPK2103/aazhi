@@ -1021,6 +1021,91 @@ Phase 8 does not model check-ins, official alerts, GPS/AIS, trip-duration compar
 
 ---
 
+## Phase 9 Active Trip Product Integration
+
+Phase 9 connects the Phase 7–8 intelligence stack to the real product workflow.
+
+### Pre-departure to active-trip lifecycle
+
+```text
+PRE-DEPARTURE ASSESSMENT (POST /api/assess — unchanged)
+↓
+OPTIONAL CONCERN CONFIRMATION (client workflow state only)
+↓
+RECORD TRIP START (POST /api/risk/trips/start)
+↓
+PERSISTED ACTIVE TRIP + RiskState v1
+↓
+ACTIVE TRIP WORKSPACE
+↓
+CHECK LATEST SEA CONDITIONS (POST .../refresh-marine)
+↓
+MARINE_STATE_UPDATED → processRiskEvent
+↓
+UPDATED POSTURE + ACTION STATE + GROUNDED EXPLANATION + TIMELINE
+```
+
+### Explicit concern confirmation
+
+- User confirms one bounded operational concern in the UI
+- **No API persistence** until RECORD TRIP START
+- `reportVesselConcern` runs only inside trip-start server flow
+- Gemini blockers/conflicts are never auto-persisted
+
+### Marine reference location
+
+`MarineReferenceLocation` (`latitude`, `longitude`, `label`) is stored on Trip and frozen in RiskState snapshots.
+
+It is the marine forecast reference location — not live vessel tracking, AIS, or GPS.
+
+### Device-local continuity (MVP, no authentication)
+
+| Key | Stored value |
+| --- | --- |
+| `aazhi:vessel-id` | `vesselId` only |
+| `aazhi:active-trip-id` | `tripId` only |
+
+Database remains source of truth. Risk state is not stored in `localStorage`.
+
+### APIs
+
+| Route | Purpose |
+| --- | --- |
+| `POST /api/risk/trips/start` | Record trip + initial risk state |
+| `GET /api/risk/trips/[tripId]` | Active trip DTO + timeline |
+| `POST /api/risk/trips/[tripId]/refresh-marine` | Manual marine refresh + orchestration |
+
+### Server composition
+
+Production wiring lives in `src/server/risk-intelligence/` (`server-only`):
+
+- Prisma persistence adapters
+- Production marine adapter (`fetchMarineContext` → `toMarineRiskState`)
+- Real Gemini Risk Interpreter provider
+- `INITIAL_SAFETY_KNOWLEDGE`
+
+Application logic (`ActiveTripService`, DTOs) lives in `src/application/active-trip/` and is directly testable with in-memory repositories and fake providers.
+
+### Policy vs AI explanation
+
+- **ACTION STATE** — deterministic `OperationalAction` from policy
+- **CONTEXTUAL EXPLANATION** — selective Gemini Risk Interpreter output when reassessment required
+- Interpreter failure does not fabricate explanation prose
+
+### Manual monitoring language
+
+Product copy uses **CHECK LATEST SEA CONDITIONS** and **Manual update — AAZHI is not continuously monitoring this trip.**
+
+AAZHI does not claim continuous monitoring, live tracking, or automatic alerts.
+
+### S003 complete product lifecycle
+
+Trip start with `ENGINE_RELIABILITY` OPEN + `PROCEED WITH CAUTION` → manual refresh with worsening marine → wave `+0.7 m`, wind `+5 km/h`, reassessment `MATERIAL_ENVIRONMENTAL_CHANGE_WITH_ACTIVE_CONCERN`, policy `COORDINATOR_REVIEW_REQUIRED`, interpreter `SUCCEEDED`, posture `COORDINATOR_REVIEW_REQUIRED`, state version 2.
+
+See [docs/product/active-trip-workflow.md](./product/active-trip-workflow.md).
+
+---
+
 ## Phase 1 Readiness
 
 **READY** (Phase 0 complete; Phase 1 domain foundation landed on this branch)

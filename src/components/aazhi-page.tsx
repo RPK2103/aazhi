@@ -5,10 +5,12 @@ import { SurfaceHero } from "@/components/hero/surface-hero";
 import { OceanEnvironment } from "@/components/ocean/ocean-environment";
 import { DecisionWorkspace } from "@/components/workspace/decision-workspace";
 import { useAssessmentWorkflow } from "@/hooks/use-assessment-workflow";
+import { useActiveTripWorkflow } from "@/hooks/use-active-trip-workflow";
 import { useDescentScroll } from "@/hooks/use-descent-scroll";
 
 export function AazhiPage() {
   const workflow = useAssessmentWorkflow();
+  const activeTripWorkflow = useActiveTripWorkflow();
   const {
     descentZoneRef,
     workspaceRef,
@@ -45,6 +47,7 @@ export function AazhiPage() {
 
         <DecisionWorkspace
           workflow={workflow}
+          activeTripWorkflow={activeTripWorkflow}
           workspaceRef={workspaceRef}
           workspaceReveal={transforms.workspaceReveal}
         />

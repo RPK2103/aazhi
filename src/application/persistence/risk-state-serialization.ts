@@ -7,7 +7,27 @@ import {
   TRIP_STATUSES,
   type RiskState,
 } from "@/domain/risk";
+import { validateMarineReferenceLocation } from "@/domain/risk/marine-reference-location";
 import { PersistenceMappingError } from "@/application/persistence/persistence-errors";
+
+const marineReferenceLocationSchema = z
+  .object({
+    latitude: z.number(),
+    longitude: z.number(),
+    label: z.string().nullable(),
+  })
+  .superRefine((value, ctx) => {
+    try {
+      validateMarineReferenceLocation(value);
+    } catch (error) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          error instanceof Error ? error.message : "Invalid marine reference location",
+        path: [],
+      });
+    }
+  });
 
 const marineRiskStateSchema = z.object({
   waveHeightM: z.number().nullable(),
@@ -35,6 +55,7 @@ const tripContextSchema = z.object({
   crewCount: z.number(),
   plannedDurationHours: z.number(),
   tripStatus: z.enum(TRIP_STATUSES),
+  marineReferenceLocation: marineReferenceLocationSchema,
   startedAt: z.string().optional(),
   expectedReturnAt: z.string().optional(),
   endedAt: z.string().optional(),

@@ -15,6 +15,7 @@ import {
   mapPersistedTripStatus,
 } from "@/infrastructure/persistence/prisma/persistence-mappers";
 import { createInMemoryPersistenceRepositories } from "@/test-support/persistence";
+import { TEST_MARINE_REFERENCE } from "@/test-support/persistence/test-marine-reference";
 import type {
   PersistenceEvaluationResult,
   PersistenceScenarioFixture,
@@ -129,6 +130,7 @@ async function seedScenario(
       crewCount: 5,
       plannedDurationHours: 8,
       status: "ACTIVE",
+      ...TEST_MARINE_REFERENCE,
     },
     { createdAt: DAY2_CREATED_AT, updatedAt: DAY2_UPDATED_AT },
     {
@@ -253,6 +255,11 @@ export function buildReferenceRiskState(): RiskState {
       crewCount: 5,
       plannedDurationHours: 8,
       tripStatus: "ACTIVE",
+      marineReferenceLocation: {
+        latitude: 13.125,
+        longitude: 80.3,
+        label: "Chennai / Kasimedu",
+      },
     },
     marineState: {
       waveHeightM: 0.8,

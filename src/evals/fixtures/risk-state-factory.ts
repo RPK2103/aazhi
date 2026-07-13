@@ -47,6 +47,12 @@ export function buildMarineState(
   };
 }
 
+export const EVAL_MARINE_REFERENCE = {
+  latitude: 13.125,
+  longitude: 80.3,
+  label: "Chennai / Kasimedu",
+} as const;
+
 export function buildTripContext(
   partial: Partial<TripContext> = {},
 ): TripContext {
@@ -56,6 +62,7 @@ export function buildTripContext(
     crewCount: 5,
     plannedDurationHours: 8,
     tripStatus: "ACTIVE",
+    marineReferenceLocation: EVAL_MARINE_REFERENCE,
     ...partial,
   };
 }

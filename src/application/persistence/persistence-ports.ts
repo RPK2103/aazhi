@@ -19,6 +19,9 @@ export interface CreateTripInput {
   crewCount: number;
   plannedDurationHours: number;
   status: string;
+  marineReferenceLatitude: number;
+  marineReferenceLongitude: number;
+  marineReferenceLabel?: string | null;
   startedAt?: string | null;
   expectedReturnAt?: string | null;
   endedAt?: string | null;

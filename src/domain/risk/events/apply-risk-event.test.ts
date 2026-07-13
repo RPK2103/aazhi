@@ -4,6 +4,12 @@ import type { MarineStateUpdatedEvent } from "./risk-event";
 import { applyRiskEvent, RiskEventTripMismatchError } from "./apply-risk-event";
 import type { RiskState } from "../risk-state";
 
+const DEFAULT_MARINE_REFERENCE = {
+  latitude: 13.125,
+  longitude: 80.3,
+  label: "Chennai / Kasimedu",
+} as const;
+
 const baseState: RiskState = {
   tripContext: {
     tripId: "trip-001",
@@ -11,6 +17,7 @@ const baseState: RiskState = {
     crewCount: 5,
     plannedDurationHours: 8,
     tripStatus: "ACTIVE",
+    marineReferenceLocation: DEFAULT_MARINE_REFERENCE,
   },
   marineState: {
     waveHeightM: 0.8,

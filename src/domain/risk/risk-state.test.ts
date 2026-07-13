@@ -111,6 +111,11 @@ describe("S003 initial risk state representation", () => {
       crewCount: 5,
       plannedDurationHours: 8,
       tripStatus: "ACTIVE",
+      marineReferenceLocation: {
+        latitude: 13.125,
+        longitude: 80.3,
+        label: "Chennai / Kasimedu",
+      },
     };
 
     expect(tripContext.crewCount).toBe(5);

@@ -30,6 +30,9 @@ describe("Prisma persistence mappers", () => {
       crewCount: 5,
       plannedDurationHours: 8,
       status: "ACTIVE",
+      marineReferenceLatitude: 13.125,
+      marineReferenceLongitude: 80.3,
+      marineReferenceLabel: "Chennai / Kasimedu",
       startedAt: null,
       expectedReturnAt: null,
       endedAt: null,
@@ -59,6 +62,11 @@ describe("Prisma persistence mappers", () => {
           crewCount: 5,
           plannedDurationHours: 8,
           tripStatus: "ACTIVE",
+          marineReferenceLocation: {
+            latitude: 13.125,
+            longitude: 80.3,
+            label: "Chennai / Kasimedu",
+          },
         },
         marineState: {
           waveHeightM: 0.8,
@@ -92,6 +100,11 @@ describe("Prisma persistence mappers", () => {
           crewCount: 5,
           plannedDurationHours: 8,
           tripStatus: "ACTIVE",
+          marineReferenceLocation: {
+            latitude: 13.125,
+            longitude: 80.3,
+            label: "Chennai / Kasimedu",
+          },
         },
         marineState: {
           waveHeightM: 0.8,

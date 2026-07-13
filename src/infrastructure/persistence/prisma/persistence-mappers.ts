@@ -3,7 +3,9 @@ import {
   isRiskConcept,
   isRiskPosture,
   isTripStatus,
+  validateMarineReferenceLocation,
   type ConcernStatus,
+  type MarineReferenceLocation,
   type RiskConcept,
   type RiskPosture,
   type TripStatus,
@@ -73,12 +75,34 @@ export function mapPersistedVessel(record: {
   };
 }
 
+export function mapPersistedMarineReferenceLocation(record: {
+  marineReferenceLatitude: number;
+  marineReferenceLongitude: number;
+  marineReferenceLabel: string | null;
+}): MarineReferenceLocation {
+  try {
+    return validateMarineReferenceLocation({
+      latitude: record.marineReferenceLatitude,
+      longitude: record.marineReferenceLongitude,
+      label: record.marineReferenceLabel,
+    });
+  } catch (error) {
+    throw new PersistenceMappingError(
+      error instanceof Error ? error.message : "Invalid marine reference location",
+      "marineReferenceLocation",
+    );
+  }
+}
+
 export function mapPersistedTrip(record: {
   id: string;
   vesselId: string;
   crewCount: number;
   plannedDurationHours: number;
   status: string;
+  marineReferenceLatitude: number;
+  marineReferenceLongitude: number;
+  marineReferenceLabel: string | null;
   startedAt: Date | string | null;
   expectedReturnAt: Date | string | null;
   endedAt: Date | string | null;
@@ -86,12 +110,16 @@ export function mapPersistedTrip(record: {
   updatedAt: Date | string;
 }): PersistedTrip {
   mapPersistedTripStatus(record.status, "status");
+  mapPersistedMarineReferenceLocation(record);
   return {
     id: record.id,
     vesselId: record.vesselId,
     crewCount: record.crewCount,
     plannedDurationHours: record.plannedDurationHours,
     status: record.status,
+    marineReferenceLatitude: record.marineReferenceLatitude,
+    marineReferenceLongitude: record.marineReferenceLongitude,
+    marineReferenceLabel: record.marineReferenceLabel,
     startedAt: record.startedAt ? toIsoString(record.startedAt) : null,
     expectedReturnAt: record.expectedReturnAt
       ? toIsoString(record.expectedReturnAt)

@@ -13,6 +13,8 @@ export function isTripStatus(value: string): value is TripStatus {
   return TRIP_STATUS_SET.has(value);
 }
 
+import type { MarineReferenceLocation } from "./marine-reference-location";
+
 /**
  * Operational trip identity and planning context.
  * Timestamps are ISO strings when present; omitted fields remain optional.
@@ -23,6 +25,7 @@ export interface TripContext {
   crewCount: number;
   plannedDurationHours: number;
   tripStatus: TripStatus;
+  marineReferenceLocation: MarineReferenceLocation;
   startedAt?: string;
   expectedReturnAt?: string;
   endedAt?: string;

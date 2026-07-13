@@ -15,6 +15,7 @@ interface Props {
   result: AssessmentResponse;
   submittedContext: SubmittedContext;
   onReset: () => void;
+  tripBridge?: React.ReactNode;
 }
 
 const reveal = (delay: number, reduced: boolean) =>
@@ -34,6 +35,7 @@ export function AssessmentDashboard({
   result,
   submittedContext,
   onReset,
+  tripBridge,
 }: Props) {
   const reducedMotion = Boolean(useReducedMotion());
   const { assessment, marineContext } = result;
@@ -110,6 +112,8 @@ export function AssessmentDashboard({
         AAZHI provides preparedness and readiness assistance, not official
         maritime clearance. Follow local and maritime authority instructions.
       </aside>
+
+      {tripBridge}
 
       <button className="workspace-secondary-button" type="button" onClick={onReset}>
         NEW ASSESSMENT

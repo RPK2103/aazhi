@@ -39,16 +39,19 @@ model VesselConcern {
 }
 
 model Trip {
-  id                   String    @id
-  vesselId             String
-  crewCount            Int
-  plannedDurationHours Int
-  status               String
-  startedAt            DateTime?
-  expectedReturnAt     DateTime?
-  endedAt              DateTime?
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  id                       String    @id
+  vesselId                 String
+  crewCount                Int
+  plannedDurationHours     Int
+  status                   String
+  marineReferenceLatitude  Float
+  marineReferenceLongitude Float
+  marineReferenceLabel     String?
+  startedAt                DateTime?
+  expectedReturnAt         DateTime?
+  endedAt                  DateTime?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
 
   vessel         Vessel                  @relation(fields: [vesselId], references: [id], onDelete: Cascade)
   snapshots      TripRiskStateSnapshot[]

@@ -6,6 +6,7 @@ import type { RiskOrchestratorDependencies } from "@/application/risk-orchestrat
 import { INITIAL_SAFETY_KNOWLEDGE } from "@/data/safety";
 import type { RiskInterpreterProvider } from "@/lib/ai";
 import { createInMemoryPersistenceRepositories } from "@/test-support/persistence";
+import { TEST_MARINE_REFERENCE } from "@/test-support/persistence/test-marine-reference";
 
 export const ORCH_DAY1_CREATED_AT = "2026-07-12T05:00:00.000Z";
 export const ORCH_DAY1_UPDATED_AT = "2026-07-12T05:00:00.000Z";
@@ -116,6 +117,7 @@ export async function seedS003PersistedTrip(
       crewCount: 5,
       plannedDurationHours: 8,
       status: "ACTIVE",
+      ...TEST_MARINE_REFERENCE,
     },
     { createdAt: ORCH_DAY2_CREATED_AT, updatedAt: ORCH_DAY2_UPDATED_AT },
     {
