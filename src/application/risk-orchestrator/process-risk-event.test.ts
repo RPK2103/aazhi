@@ -122,7 +122,7 @@ describe("processRiskEvent", () => {
       );
 
       expect(result.duplicateEvent).toBe(false);
-      expect(waveDelta?.signedChange ?? waveDelta?.absoluteChange).toBe(0.7);
+      expect(waveDelta?.absoluteChange).toBe(0.7);
       expect(windDelta?.absoluteChange).toBe(5);
       expect(waveDelta?.reassessmentRelevant).toBe(true);
       expect(windDelta?.reassessmentRelevant).toBe(false);

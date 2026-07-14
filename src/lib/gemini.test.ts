@@ -17,10 +17,9 @@ vi.mock("@google/genai", () => ({
 
 import {
   AssessmentGenerationError,
-  GEMINI_MODEL,
-  generateAssessment,
   parseAssessmentResponse,
-} from "@/lib/gemini";
+} from "@/lib/gemini-parse";
+import { GEMINI_MODEL, generateAssessment } from "@/lib/generate-assessment";
 
 const originalApiKey = process.env.GEMINI_API_KEY;
 

@@ -231,6 +231,24 @@ describe("POST /api/risk/trips/start", () => {
 });
 
 describe("active trip lifecycle API", () => {
+  it("rejects malformed tripId on GET", async () => {
+    const harness = createTestActiveTripHarness();
+    const GET = createGetTripHandler(harness.activeTripService);
+    const response = await GET(new Request("http://localhost"), {
+      params: Promise.resolve({ tripId: "not-a-uuid" }),
+    });
+    expect(response.status).toBe(400);
+  });
+
+  it("rejects malformed tripId on refresh-marine", async () => {
+    const harness = createTestActiveTripHarness();
+    const REFRESH = createRefreshMarineHandler(harness.activeTripService);
+    const response = await REFRESH(new Request("http://localhost", { method: "POST" }), {
+      params: Promise.resolve({ tripId: "invalid-trip-id" }),
+    });
+    expect(response.status).toBe(400);
+  });
+
   it("carries forward existing OPEN concern", async () => {
     const harness = createTestActiveTripHarness();
     const POST = createStartTripHandler(harness.activeTripService);

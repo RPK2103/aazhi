@@ -3,7 +3,7 @@ import {
   findNearestMarineIndex,
   normalizeMarineResponse,
   type MarineApiResponse,
-} from "@/lib/marine";
+} from "@/lib/marine-normalize";
 
 const times = [
   "2026-07-11T06:00",

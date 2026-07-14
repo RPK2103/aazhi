@@ -9,12 +9,24 @@ import {
 import {
   assessmentInputSchema,
   hasFieldObservation,
+  MAX_ASSESSMENT_MULTIPART_BYTES,
+  parseContentLengthHeader,
+  validateAssessmentFormData,
   validateUploadMetadata,
 } from "@/lib/validation";
 
 export const runtime = "nodejs";
 
 class UploadError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
+class AssessmentRequestError extends Error {
   constructor(
     message: string,
     readonly status: number,
@@ -56,20 +68,51 @@ async function toInlineData(upload: ReturnType<typeof validateUpload>) {
   };
 }
 
+function rejectOversizedBody(request: Request) {
+  const contentLength = parseContentLengthHeader(
+    request.headers.get("content-length"),
+  );
+  if (
+    contentLength !== null &&
+    contentLength > MAX_ASSESSMENT_MULTIPART_BYTES
+  ) {
+    throw new AssessmentRequestError(
+      "The assessment request is too large.",
+      413,
+    );
+  }
+}
+
 export async function POST(request: Request) {
   try {
+    rejectOversizedBody(request);
+
     const formData = await request.formData();
+    const formValidation = validateAssessmentFormData(formData);
+    if (!formValidation.valid) {
+      throw new AssessmentRequestError(
+        "Check the form fields and try again.",
+        400,
+      );
+    }
+
     const input = assessmentInputSchema.parse({
-      location: formData.get("location"),
-      boatType: formData.get("boatType"),
-      crewCount: formData.get("crewCount"),
-      tripDuration: formData.get("tripDuration"),
-      language: formData.get("language"),
-      typedObservation: formData.get("typedObservation") ?? "",
+      location: formValidation.scalars.location,
+      boatType: formValidation.scalars.boatType,
+      crewCount: formValidation.scalars.crewCount,
+      tripDuration: formValidation.scalars.tripDuration,
+      language: formValidation.scalars.language,
+      typedObservation: formValidation.scalars.typedObservation ?? "",
     });
 
-    const audio = validateUpload(optionalFile(formData.get("audio")), "audio");
-    const image = validateUpload(optionalFile(formData.get("image")), "image");
+    const audio = validateUpload(
+      optionalFile(formValidation.files.audio),
+      "audio",
+    );
+    const image = validateUpload(
+      optionalFile(formValidation.files.image),
+      "image",
+    );
 
     if (
       !hasFieldObservation({
@@ -117,6 +160,12 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "Check the form fields and try again." },
         { status: 400 },
+      );
+    }
+    if (error instanceof AssessmentRequestError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status },
       );
     }
     if (error instanceof UploadError) {

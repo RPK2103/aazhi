@@ -133,6 +133,70 @@ describe("POST /api/assess", () => {
     expect(fetchMarineContextMock).not.toHaveBeenCalled();
   });
 
+  it("rejects unknown multipart keys", async () => {
+    const formData = validForm();
+    formData.set("actionPosture", "DO NOT DEPART YET");
+    const response = await POST(requestFor(formData));
+
+    expect(response.status).toBe(400);
+    expect(await responseBody(response)).toEqual({
+      error: "Check the form fields and try again.",
+    });
+    expect(fetchMarineContextMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects duplicate crewCount", async () => {
+    const formData = validForm();
+    formData.append("crewCount", "6");
+    const response = await POST(requestFor(formData));
+
+    expect(response.status).toBe(400);
+    expect(fetchMarineContextMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects duplicate tripDuration", async () => {
+    const formData = validForm();
+    formData.append("tripDuration", "10");
+    const response = await POST(requestFor(formData));
+
+    expect(response.status).toBe(400);
+    expect(fetchMarineContextMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects multiple image fields", async () => {
+    const formData = validForm();
+    formData.append("image", new File(["a"], "a.png", { type: "image/png" }));
+    formData.append("image", new File(["b"], "b.png", { type: "image/png" }));
+    const response = await POST(requestFor(formData));
+
+    expect(response.status).toBe(400);
+    expect(fetchMarineContextMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects multiple audio fields", async () => {
+    const formData = validForm();
+    formData.append("audio", new File(["a"], "a.webm", { type: "audio/webm" }));
+    formData.append("audio", new File(["b"], "b.webm", { type: "audio/webm" }));
+    const response = await POST(requestFor(formData));
+
+    expect(response.status).toBe(400);
+    expect(fetchMarineContextMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects oversized multipart body when Content-Length is present", async () => {
+    const formData = validForm();
+    const response = await POST(
+      new Request("http://localhost/api/assess", {
+        method: "POST",
+        headers: { "content-length": String(50 * 1024 * 1024) },
+        body: formData,
+      }),
+    );
+
+    expect(response.status).toBe(413);
+    expect(fetchMarineContextMock).not.toHaveBeenCalled();
+  });
+
   it("rejects an unsupported image MIME type", async () => {
     const formData = validForm();
     formData.set(

@@ -123,7 +123,7 @@ export function getInterpretationPresentation(
 }
 
 export function formatGroundingSources(interpretation: RiskInterpretation): string[] {
-  return interpretation.groundingSources.map((source) => {
+  return (interpretation.groundingSources ?? []).map((source) => {
     const authority = source.authority.replaceAll("_", " / ");
     return `${authority} — ${source.documentTitle}`;
   });

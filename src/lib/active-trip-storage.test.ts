@@ -58,7 +58,7 @@ describe("active-trip storage", () => {
   it("does not write risk state to localStorage", () => {
     writeVesselId("vessel-1");
     writeActiveTripId("trip-1");
-    const storage = window.localStorage as ReturnType<typeof createStorageMock>;
+    const storage = window.localStorage as unknown as ReturnType<typeof createStorageMock>;
     expect(storage.store.has("aazhi:risk-state")).toBe(false);
     expect(storage.store.has("aazhi:marine-state")).toBe(false);
   });
@@ -72,7 +72,7 @@ describe("active-trip storage", () => {
   it("only stores the two MVP continuity keys", () => {
     writeVesselId("vessel-1");
     writeActiveTripId("trip-1");
-    const storage = window.localStorage as ReturnType<typeof createStorageMock>;
+    const storage = window.localStorage as unknown as ReturnType<typeof createStorageMock>;
     expect([...storage.store.keys()].sort()).toEqual([
       "aazhi:active-trip-id",
       "aazhi:vessel-id",

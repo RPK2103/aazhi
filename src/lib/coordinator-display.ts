@@ -77,7 +77,7 @@ export function getAttentionBasisExplanation(
     return formatOperationalActionLabel(basis.policyAction);
   }
 
-  if (basis.materialDeltas.length > 0) {
+  if ((basis.materialDeltas ?? []).length > 0) {
     return "Recorded state change established attention basis.";
   }
 
@@ -145,7 +145,7 @@ export function getAttentionBasisActionStateLabel(
 export function formatMaterialDeltasForDisplay(
   basis: AttentionBasisDto,
 ): ReturnType<typeof formatMarineDelta>[] {
-  return basis.materialDeltas
+  return (basis.materialDeltas ?? [])
     .filter((delta) => delta.type !== "VALUE_UNCHANGED")
     .map((delta) => formatMarineDelta(delta));
 }

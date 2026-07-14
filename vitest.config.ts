@@ -1,10 +1,15 @@
 import { fileURLToPath } from "node:url";
+import path from "node:path";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "server-only": path.resolve(
+        fileURLToPath(new URL(".", import.meta.url)),
+        "src/test-support/server-only-stub.ts",
+      ),
     },
   },
   test: {
@@ -32,9 +37,10 @@ export default defineConfig({
         "src/lib/coordinator-display.ts",
         "src/lib/active-trip-storage.ts",
         "src/lib/ai/**/*.ts",
-        "src/lib/gemini.ts",
-        "src/lib/locations.ts",
-        "src/lib/marine.ts",
+        "src/lib/marine-normalize.ts",
+        "src/lib/fetch-marine-context.ts",
+        "src/lib/gemini-parse.ts",
+        "src/lib/generate-assessment.ts",
         "src/lib/validation.ts",
         "src/server/risk-intelligence/**/*.ts",
       ],

@@ -34,3 +34,10 @@ pnpm-debug.log*
 .neon
 .neon/
 skills-lock.json
+
+# Playwright output
+playwright-report/
+test-results/
+
+# TypeScript incremental build output
+*.tsbuildinfo
