@@ -1,568 +1,521 @@
-# AAZHI
+<p align="center">
+  <img src="./public/brand/aazhi-logo.png" alt="AAZHI logo" width="120" />
+</p>
 
-> **“See the sea. Speak your situation. Know your next move.”**
+<h1 align="center">AAZHI</h1>
 
-> **“Marine systems forecast the sea. AAZHI interprets the decision at the shore.”**
+<p align="center">
+  <strong>Operational Risk-State Intelligence for Small Fishing Operations</strong>
+</p>
 
-AAZHI is a multimodal pre-departure context reconciliation and readiness
-assistant for small-scale fishers. It combines live marine forecast context
-with fisher-reported observations, optional visible context, vessel readiness,
-crew context, and planned trip duration to generate a prioritized operational
-readiness brief before departure.
+<p align="center">
+  <strong>TOP 10 · PROMPT WARS BENGALURU 2026 · SOLO IN-PERSON BUILD</strong>
+</p>
 
-**Live Demo:** [https://aazhi-final.vercel.app/](https://aazhi-final.vercel.app/)
+<p align="center">
+  <a href="https://aazhi-final.vercel.app/">Live synthetic demo</a>
+  ·
+  <a href="https://github.com/RPK2103/aazhi">Repository</a>
+  ·
+  <a href="https://github.com/RPK2103/aazhi/actions/workflows/release-gate.yml"><img src="https://github.com/RPK2103/aazhi/actions/workflows/release-gate.yml/badge.svg?branch=main" alt="Release Gate" /></a>
+</p>
 
-## The Problem
+> **Forecasts describe the environment. AAZHI maintains the operational risk state of a trip and explains when that state materially changes.**
 
-A fisher may separately have:
+---
 
-```text
-MARINE FORECAST
-        +
-WHAT THEY CAN SEE
-        +
-WHAT HAPPENED TO THE BOAT
-        +
-CREW CONTEXT
-        +
-TODAY'S TRIP PLAN
+## Product visual
+
+<p align="center">
+  <img src="docs/assets/01-aazhi-hero.png" alt="AAZHI marine assessment and operational risk-state interface" width="900" />
+</p>
+
+---
+
+## The operational gap
+
+A marine forecast can report wave height, wave period, wind, and changing sea conditions.
+
+It does not inherently retain that an engine stopped twice yesterday, communication equipment remains unreliable, or a vessel concern has only been reported as handled but not confirmed resolved.
+
+AAZHI connects environmental change with the operational context that remains active for a specific trip.
+
+> **What changed, and why does it matter given what is still unresolved about this trip?**
+
+AAZHI is not an AI weather application, chatbot, multi-agent platform, LLM wrapper, vessel-tracking system, autonomous navigation tool, maritime-clearance system, or safety-certification product.
+
+---
+
+## What AAZHI holds
+
+| Capability | What the product does |
+| --- | --- |
+| **Contextual pre-departure assessment** | Typed observations, voice input, image context, crew and trip details, marine reference location, and contextual Gemini assessment via `POST /api/assess` |
+| **Explicit concern confirmation** | Human-confirmed concern carry-forward with bounded `RiskConcept` vocabulary; model blockers are not auto-persisted — concerns enter the risk record only when the trip is recorded |
+| **Persistent active-trip risk state** | Vessel and trip risk record, versioned immutable snapshots, active concern preservation, PostgreSQL/Neon as source of truth, browser storage limited to continuity identifiers |
+| **Manual marine reassessment** | User-initiated latest sea-condition check, normalized marine state, exact state deltas, reassessment sensitivity, bounded policy, updated posture and timeline |
+| **Grounded interpretation** | Selective AI invocation, curated `RiskConcept` safety retrieval, structured Gemini output, source provenance validation, fail-closed interpretation boundary |
+| **Coordinator attention workspace** | Active-trip attention groups, `PERSISTED_STATE` and `PROCESSING_TRACE` attention bases, deterministic ordering — no AI ranking, no marine-provider call during projection |
+
+---
+
+## How AAZHI thinks
+
+> **Deterministic systems detect.**
+> **Curated retrieval grounds.**
+> **AI interprets.**
+> **Deterministic policy controls operational action.**
+> **Persistence preserves risk memory.**
+
+AAZHI uses AI only where contextual language interpretation adds value. State comparison, reassessment, operational policy, posture transitions, persistence, and coordinator ordering remain explicit and system-controlled.
+
+**Gemini explains validated interactions. Deterministic systems control operational consequences.**
+
+---
+
+## Product lifecycle
+
+Manual marine checks and human-confirmed concerns — not continuous monitoring, GPS, or AIS tracking.
+
+```mermaid
+flowchart LR
+    subgraph Operator["Trip operator"]
+        A["Observation, voice, image<br/>and trip context"]
+        B["Gemini multimodal<br/>pre-departure assessment"]
+        C["Explicit human<br/>concern confirmation"]
+        D["Record trip start"]
+    end
+
+    subgraph ActiveTrip["Persistent active trip"]
+        E["Vessel risk record"]
+        F["Versioned RiskState"]
+        G["Active Trip Workspace"]
+        H["Manual: Check latest<br/>sea conditions"]
+        I["Contextual risk processing"]
+        J["Updated state<br/>and timeline"]
+    end
+
+    subgraph Coordination["Shore coordination"]
+        K["Persisted active trips"]
+        L["Deterministic attention<br/>projection"]
+        M["Coordinator View"]
+    end
+
+    A --> B --> C --> D
+    D --> E --> F --> G
+    G --> H --> I --> J
+    J --> F
+    F --> K
+    J --> K
+    K --> L --> M
 ```
 
-These pieces are fragmented, leaving the fisher to mentally reconcile them and
-answer:
+| Note | Detail |
+| --- | --- |
+| Concern persistence | Requires explicit human confirmation before trip recording |
+| Marine refresh | User-initiated manual check — not background polling |
+| Marine reference location | Configured coastal reference point — not live vessel tracking |
+| Coordinator View | Read-only projection over persisted state and timeline traces |
 
-**“What should I change before I leave?”**
+---
 
-AAZHI addresses that operational gap. It is not another weather dashboard.
+## Intelligence architecture
 
-## What AAZHI Does
+```mermaid
+flowchart TB
+    subgraph Product["Product Experience"]
+        P1["Pre-departure Assessment"]
+        P2["Active Trip Workspace"]
+        P3["Coordinator View"]
+    end
 
-AAZHI is a **last-mile interpretation layer**.
+    subgraph External["External Marine Context"]
+        X1["Open-Meteo Marine Data"]
+        X2["Normalized MarineRiskState"]
+        X1 --> X2
+    end
 
-Marine forecasting systems provide environmental conditions. They cannot know:
+    subgraph Risk["Deterministic Risk Intelligence"]
+        R1["MARINE_STATE_UPDATED<br/>RiskEvent"]
+        R2["Event Applier"]
+        R3["Risk Delta Engine"]
+        R4["Reassessment Gate"]
+        R5["Operational Policy"]
+        R6["Deterministic<br/>Posture Transition"]
+        R7["Coordinator Attention<br/>Projection"]
+        R1 --> R2 --> R3 --> R4 --> R5 --> R6
+    end
 
-- The engine had trouble yesterday
-- Backup communication is unavailable today
-- The trip is eight hours instead of three
-- The fisher is observing worsening nearshore conditions
-- A specific crew is leaving on a specific vessel today
+    subgraph Grounding["Curated Grounding"]
+        G1["RiskConcept Retrieval"]
+        G2["Curated Safety Knowledge"]
+        G1 --> G2
+    end
 
-AAZHI reconciles this local field and readiness context with live marine
-information, then produces a concise pre-departure action brief.
+    subgraph AI["Bounded AI Interpretation"]
+        A1["AI Invocation Gate"]
+        A2["Gemini Risk Interpreter"]
+        A3["Structured Output Validation"]
+        A4["Grounding Provenance Validation"]
+        A1 --> A2 --> A3 --> A4
+    end
 
-## Core Reasoning Flow
+    subgraph State["Persistent State and Traceability"]
+        S1["Vessel Risk Record"]
+        S2["Immutable TripRiskStateSnapshot"]
+        S3["TimelineEvent"]
+        S4[("PostgreSQL / Neon")]
+        S1 --> S4
+        S2 --> S4
+        S3 --> S4
+    end
+
+    P1 --> S1
+    P2 -->|manual refresh| X1
+    X2 --> R1
+    S4 --> R2
+    R3 --> G1
+    R4 --> A1
+    G2 --> A1
+    R5 --> R6
+    R6 --> S2
+    R6 --> S3
+    A4 -.->|explanation attached to trace| S3
+    S4 --> R7
+    R7 --> P3
+    S4 --> P2
+```
+
+| Responsibility | System owner |
+| --- | --- |
+| Normalize marine context | Marine adapter |
+| Detect factual state change | Risk Delta Engine |
+| Determine reassessment | Reassessment Gate |
+| Derive bounded action | Operational Policy |
+| Retrieve safety context | `RiskConcept` retrieval |
+| Explain validated interaction | Gemini Risk Interpreter |
+| Validate model structure | Zod / runtime schemas |
+| Validate grounding sources | Provenance validator |
+| Transition operational posture | Deterministic posture logic |
+| Preserve historical state | PostgreSQL / Neon snapshots |
+| Prioritise coordinator attention | Deterministic read projection |
+
+---
+
+## Golden scenario — unresolved engine concern meets changing sea conditions
+
+Synthetic workflow-conformance scenario — not field validation or maritime safety accuracy.
+
+### Unresolved trip context
 
 ```text
-FISHER FIELD CONTEXT
-(Speak / Type / Show)
-        +
-VESSEL & TRIP CONTEXT
-        +
-LIVE MARINE CONTEXT
-(Open-Meteo)
+ENGINE_RELIABILITY
+OPEN
+```
+
+> “The engine stopped twice yesterday while running and restarted after intervention.”
+
+### Environmental change
+
+| Measurement | Recorded state | Updated state | Delta |
+| --- | ---: | ---: | ---: |
+| Wave height | 0.8 m | 1.5 m | **+0.7 m** |
+| Wind speed | 13 km/h | 18 km/h | +5 km/h |
+
+### System result
+
+```text
+MATERIAL_ENVIRONMENTAL_CHANGE_WITH_ACTIVE_CONCERN
         ↓
-GEMINI MULTIMODAL CONTEXT SYNTHESIS
+COORDINATOR_REVIEW_REQUIRED
         ↓
-CONDITION CONFLICT DETECTION
-        +
-DEPARTURE BLOCKER IDENTIFICATION
-        +
-ACTION POSTURE
+Selective grounded Gemini interpretation
         ↓
-PRIORITIZED PRE-DEPARTURE ACTION BRIEF
+RiskState v1 → RiskState v2
+        ↓
+ATTENTION_REQUIRED
+PROCESSING_TRACE basis
 ```
 
-## Three Evidence Layers
+The `0.5 m` wave value is an internal reassessment-sensitivity threshold in the current prototype. It is not represented as a universal maritime danger threshold. Wind change in this scenario is detected but below the `10 km/h` sensitivity threshold and does not trigger reassessment on its own.
 
-### 1. Live Marine Context
+Harness: `src/evals/scenarios/S003-engine-wave-deterioration.ts`
 
-AAZHI retrieves the following fields:
+---
 
-- Wave height
-- Wave period
-- Wind-wave height
-- Swell-wave height
+## AI authority boundary
 
-**Source:** Open-Meteo Marine Forecast.
+> **Gemini sits at the interpretation boundary, not the decision boundary.**
 
-Current readings are used when available. The server also requests hourly data
-and can select the timestamp nearest to the assessment time. Missing individual
-readings remain unavailable rather than being replaced with invented defaults.
+| Deterministic system | Gemini | Explicitly unsupported |
+| --- | --- | --- |
+| Calculates `RiskDelta` | Explains validated interactions | Declaring a vessel safe |
+| Decides reassessment | Communicates significance | Selecting operational action |
+| Derives `OperationalAction` | Communicates uncertainty | Generating a risk score |
+| Transitions `RiskPosture` | References supplied grounding | Overriding policy |
+| Persists state versions | Produces structured explanation | Resolving concerns |
+| Orders coordinator attention | — | Ranking trips |
+| Enforces idempotency | — | Arbitrary state mutation |
 
-### 2. Fisher-Reported Field Observation
+---
 
-The fisher can provide:
-
-- Browser-recorded audio
-- A typed observation fallback
-
-The observation is treated as fisher-reported field context, not as a
-scientifically verified measurement.
-
-### 3. Visible + Trip Readiness Context
-
-The assessment may also include:
-
-- An optional JPEG, PNG, or WebP image
-- Boat type
-- Crew count
-- Planned trip duration
-- Coastal location
-
-Images are visible situational context only. **AAZHI does not scientifically
-measure wave height from images.**
-
-## Genuine GenAI Implementation
-
-AAZHI uses:
-
-- The official `@google/genai` SDK
-- `gemini-3.1-flash-lite`, centralized as `GEMINI_MODEL` in
-  `src/lib/gemini.ts`
-- One principal Gemini generation request per assessment
-- Text context containing trip, vessel, field, and live marine information
-- Optional audio bytes supplied as inline multimodal data
-- Optional image bytes supplied as inline multimodal data
-- Structured JSON generation using `responseMimeType: "application/json"`
-- A provider-compatible response JSON schema
-- Server-side JSON parsing and Zod validation
-
-AAZHI does not use keyword-based blocker rules. There is no production logic
-equivalent to:
+## Selective and grounded AI
 
 ```text
-if observation includes "engine":
-    add engine blocker
+Calculated deltas
++ active concerns
++ reassessment result
++ curated safety context
+        ↓
+AI Invocation Gate
+        ↓
+Gemini Risk Interpreter
+        ↓
+Structured Output Validation
+        ↓
+Grounding Provenance Validation
 ```
 
-Gemini infers departure blockers by reconciling the complete context supplied
-in the assessment.
+Interpretation may be **`SKIPPED`**, **`SUCCEEDED`**, or **`FAILED`**. Gemini is not called when `reassessmentDecision.required` is false. Malformed output is rejected. Fabricated grounding metadata rejects the complete interpretation. Deterministic policy and state processing continue on interpreter failure — no fallback AI explanation is invented.
 
-A **condition conflict** exists when fisher-reported or visible local context
-materially differs from, adds concern beyond, or complicates what the external
-marine forecast alone communicates.
+> **A citation is part of the output contract, not decoration.**
 
-In Scenario A, the external marine context may indicate comparatively moderate
-open-water conditions while the fisher reports rougher nearshore conditions,
-recent engine trouble, and missing backup communication. AAZHI surfaces that
-reconciliation gap and reasons about the combined departure-readiness impact.
+Retrieval is curated, deterministic, and `RiskConcept`-based. It is not embedding-based, vector-database-backed, or runtime web search.
 
-## Structured Assessment Contract
+---
 
-Gemini returns structured JSON containing:
+## Persistent operational memory
 
-- `actionPosture`
-- `urgency`
-- `situationSummary`
-- `conditionConflict`
-- `departureBlockers`
-- `whyThisMatters`
-- `immediateActions`
-- `preDepartureChecklist`
-- `atSeaActions`
-- `afterReturnActions`
-- `marineContextExplanation`
-- `language`
-
-The JSON is parsed and validated server-side using the production
-`AazhiAssessment` Zod schema before the result is sent to the browser. Invalid
-model output is rejected and is not rendered as trusted assessment data.
-
-## Action Postures
-
-The model must choose exactly one:
-
-- `PREPARE BEFORE DEPARTURE`
-- `PROCEED WITH CAUTION`
-- `DELAY AND REASSESS`
-- `DO NOT DEPART YET`
-
-These are pre-departure decision postures, not official government alerts or
-maritime clearances.
-
-## Architecture
+| Entity | Role |
+| --- | --- |
+| `Vessel` | Registered vessel identity and type |
+| `VesselConcern` | Bounded concern records with lifecycle status |
+| `Trip` | Active trip context, marine reference location, timing |
+| `TripRiskStateSnapshot` | Immutable versioned operational risk state |
+| `TimelineEvent` | Append-only processing and activity trace |
 
 ```text
-Browser
-  |
-  | multipart/form-data
-  v
-Next.js POST /api/assess
-  |
-  +--> Zod scalar validation
-  |
-  +--> MIME + upload-size validation
-  |
-  +--> Open-Meteo Marine API
-  |        |
-  |        v
-  |    MarineContext
-  |
-  +--> Gemini multimodal request
-           |
-           v
-     Structured JSON
-           |
-           v
-  AazhiAssessment Zod validation
-           |
-           v
-  Operational Readiness Brief
+RiskState v1
+ENGINE_RELIABILITY = OPEN
+
+RiskState v2
+ENGINE_RELIABILITY = RESOLVED
+
+Historical v1 remains OPEN.
 ```
 
-The architecture is intentionally small: a Next.js App Router application with
-one assessment Route Handler and no database or auxiliary service.
+Snapshots are immutable and versioned per trip. Historical snapshots do not re-query the latest concern record. PostgreSQL on Neon is the source of truth. Browser `localStorage` holds continuity identifiers only (`aazhi:vessel-id`, `aazhi:active-trip-id`). Marine state, risk state, concern history, and interpretation history are not browser-owned.
 
-## Efficiency by Design
+---
 
-Production behavior is deliberately bounded:
-
-- One Open-Meteo marine fetch per assessment
-- One Gemini generation request per assessment
-- No polling
-- No separate transcription request
-- No separate translation request
-- Tamil guidance is generated in the main Gemini request
-- Image and audio parts are omitted when absent
-- Uploaded files are converted to Base64 only when supplied
-- No database
-- No agent framework
-- No unnecessary persistence
-- No provider retry loop
-
-This keeps the architecture low-latency and hackathon-appropriate while
-preserving genuine multimodal reasoning.
-
-## Security and Trust Boundaries
-
-### Application security
-
-- `GEMINI_API_KEY` is server-side only
-- No `NEXT_PUBLIC` Gemini secret exists
-- `.env.local` is ignored by Git
-- Scalar form fields are validated with Zod
-- Locations, boat types, and languages are allowlisted
-- Image and audio MIME types use explicit allowlists
-- Image uploads are limited to 5 MB
-- Audio uploads are limited to 8 MB
-- Uploaded files are processed in memory and are not persisted
-- Base64 media data is never logged
-- Browser-facing errors are concise and safe
-- Provider stack traces are not exposed to users
-- React renders assessment text without `dangerouslySetInnerHTML`
-- Gemini structured output is validated with Zod before browser delivery
-
-### Product trust boundaries
-
-AAZHI:
-
-- Does not scientifically measure wave height from an image
-- Does not calculate capsize probability
-- Does not guarantee safe departure
-- Does not issue government alerts
-- Does not provide official maritime clearance
-- Does not certify vessel safety
-- Does not replace maritime or local authorities
-
-Users must follow official maritime, weather, and local authority instructions.
-
-## Automated Testing
-
-AAZHI uses **Vitest** with **V8 coverage**.
-
-The suite contains **78 automated tests across 5 test files**:
-
-- `src/app/api/assess/route.test.ts`
-- `src/lib/gemini.test.ts`
-- `src/lib/validation.test.ts`
-- `src/lib/locations.test.ts`
-- `src/lib/marine.test.ts`
-
-### Testing Strategy
-
-Tests exercise pure validation and normalization logic plus the API and Gemini
-boundaries. External Gemini and Open-Meteo boundaries are mocked, so the suite
-never consumes Gemini quota and never depends on provider availability. Manual
-Scenario A/B/C flows validate real end-to-end provider integration.
-
-### API Route Behavior
-
-Coverage includes:
-
-- Malformed multipart input and missing field observations
-- Invalid location, boat type, crew count, and trip duration
-- Unsupported and oversized image uploads
-- Valid text-only and optional-image requests
-- Marine provider failure handling
-- Gemini provider and malformed structured-output failure handling
-- Safe HTTP status and browser-facing error contracts
-
-### Gemini Structured-Output Boundary
-
-Coverage includes:
-
-- Valid structured assessments
-- Missing fields and invalid posture or urgency values
-- Malformed provider JSON
-- Empty blocker arrays
-- Tamil and Unicode preservation
-- One structured generation request
-- Optional audio and image inline-data parts
-- Missing-key and provider-failure handling
-
-### Assessment Input Validation
-
-Coverage includes:
-
-- Valid Scenario A scalar input
-- Unsupported locations
-- Unsupported boat types
-- Zero and above-limit crew counts
-- Zero and above-limit trip durations
-- Unsupported languages
-- Typed-observation length limits
-- Empty typed observations at the scalar layer
-- Typed-only, audio-only, both, and missing field-observation cases
-- Verification that an image alone is insufficient
-
-### Structured Assessment Validation
-
-Coverage includes:
-
-- Valid representative assessments
-- Action posture enum enforcement
-- Urgency enum enforcement
-- Blocker priority enforcement
-- `conditionConflict` shape validation
-- Immediate-action limits
-- Pre-departure checklist limits
-- At-sea action limits
-- After-return action limits
-- Output language validation
-
-### Coastal Location Configuration
-
-Coverage includes:
-
-- Chennai / Kasimedu, Kochi, and Mangaluru
-- Finite latitude and longitude values
-- Unique location IDs
-
-### Marine Context Normalization
-
-Coverage includes:
-
-- Nearest timestamp selection
-- Exact timestamp matching
-- Invalid timestamp handling
-- Current-reading preference
-- Null marine values
-- Zero-value preservation
-- Malformed or missing hourly data
-- Source normalization to `Open-Meteo Marine Forecast`
-
-### Upload Validation
-
-Coverage includes:
-
-- JPEG, PNG, and WebP acceptance
-- Unsupported image MIME rejection
-- Oversized image rejection
-- Acceptance of the configured audio MIME allowlist
-- MIME normalization when codec parameters are present
-- Unsupported audio MIME rejection
-- Oversized audio rejection
-
-Current V8 coverage is approximately:
-
-- **88.65% lines**
-- **88.59% statements**
-- **81.55% branches**
-- **96% functions**
-
-```bash
-npm test
-npm run test:run
-npm run test:coverage
-```
-
-## Demo Scenarios
-
-### Scenario A — High Concern
-
-- **Location:** Chennai / Kasimedu
-- **Boat:** Small fibre boat
-- **Crew:** 5
-- **Trip:** 8 hours
-
-Observation:
-
-> “The sea near shore looks rougher than this morning. My engine had trouble
-> yesterday and we do not have the second radio today.”
-
-Expected contextual behavior:
-
-- A strong action posture when supported by the full assessment
-- Engine reliability may become a blocker
-- Communication redundancy may become a blocker
-- A condition conflict may be detected
-- Guidance prioritizes the actual readiness concerns
-
-These outcomes are model-inferred and are not hardcoded frontend rules.
-
-### Scenario B — Lower Concern
-
-- **Boat:** Medium fishing vessel
-- **Crew:** 3
-- **Trip:** 3 hours
-
-Observation:
-
-> “Boat checks are complete. Engine and communication equipment are working.
-> Conditions look similar to earlier.”
-
-The output should materially differ because the supplied evidence differs. The
-model must still avoid guaranteed-safety language.
-
-### Scenario C — Tamil
-
-Select Tamil as the output language. Descriptive assessment fields are
-generated in Tamil during the same principal Gemini request. No second
-translation model call is made.
-
-## Coastal Locations in the MVP
-
-The configured locations are:
-
-- Chennai / Kasimedu
-- Kochi
-- Mangaluru
-
-Their coordinates are application configuration used for the Open-Meteo marine
-forecast lookup. The MVP does not claim nationwide GPS coverage.
-
-## Tech Stack
-
-- Next.js App Router
-- React
-- TypeScript
-- Tailwind CSS
-- Google Gemini API
-- `@google/genai`
-- Zod
-- Open-Meteo Marine Weather API
-- Vitest
-- V8 Coverage
-- Vercel
-
-## Local Setup
-
-Clone the repository:
-
-```bash
-git clone https://github.com/RPK2103/aazhi.git
-cd aazhi
-npm install
-```
-
-Copy `.env.example` to `.env.local`:
-
-```bash
-cp .env.example .env.local
-```
-
-On Windows PowerShell, use:
-
-```powershell
-Copy-Item .env.example .env.local
-```
-
-Set the server-side Gemini API key in `.env.local`:
-
-```dotenv
-GEMINI_API_KEY=your_key_here
-```
-
-Start the application:
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
-
-Run tests:
-
-```bash
-npm test
-```
-
-Generate coverage:
-
-```bash
-npm run test:coverage
-```
-
-Create a production build:
-
-```bash
-npm run build
-```
-
-Never place a real API key in repository files.
-
-## Repository Structure
+## Event processing and traceability
 
 ```text
-src/
-├─ app/
-│  ├─ api/
-│  │  └─ assess/
-│  │     ├─ route.ts
-│  │     └─ route.test.ts
-│  ├─ globals.css
-│  ├─ layout.tsx
-│  └─ page.tsx
-├─ components/
-│  ├─ fisher-intake.tsx
-│  ├─ assessment-result.tsx
-│  └─ marine-context-card.tsx
-└─ lib/
-   ├─ gemini.ts
-   ├─ gemini.test.ts
-   ├─ marine.ts
-   ├─ validation.ts
-   ├─ types.ts
-   ├─ locations.ts
-   ├─ validation.test.ts
-   ├─ locations.test.ts
-   └─ marine.test.ts
-
-package.json
-vitest.config.ts
-.env.example
+MARINE_STATE_UPDATED
+→ load persisted state
+→ apply factual event
+→ calculate deltas
+→ evaluate reassessment
+→ derive policy
+→ selectively interpret
+→ transition posture
+→ persist factual state change
+→ append timeline trace
 ```
 
-## What AAZHI Is Not
+Stable event IDs support idempotency. Duplicate events do not invoke Gemini again, create another snapshot, or append another processing trace. Snapshots are created only when factual state changes (`deltas.length > 0`). A no-change manual check does not produce a fake state version.
 
-AAZHI is not:
+---
 
-- A marine forecasting model
-- A scientific computer-vision wave estimator
-- An official maritime alert system
-- A route optimization product
-- A vessel certification service
-- A replacement for local or maritime authorities
+## Coordinator attention
 
-**AAZHI is a last-mile readiness interpretation layer.**
+The Coordinator View is a shore-side read projection over persisted active trips.
 
-## Attribution
+| Attention group | Driven by `RiskPosture` |
+| --- | --- |
+| `ATTENTION_REQUIRED` | `REASSESSMENT_REQUIRED`, `COORDINATOR_REVIEW_REQUIRED`, `OFFICIAL_ALERT_PRIORITY` |
+| `WATCH` | `CAUTION` |
+| `STABLE` | `BASELINE` |
 
-Marine forecast values used by AAZHI are retrieved from the
-[Open-Meteo Marine Weather API](https://open-meteo.com/en/docs/marine-weather-api)
-and identified in the application as **Open-Meteo Marine Forecast**.
+| Field | Value |
+| --- | --- |
+| Current posture | `REASSESSMENT_REQUIRED` |
+| Latest manual check | `NO_MATERIAL_CHANGE` |
+| Latest policy action | `NO_ACTION_REQUIRED` |
+| Attention basis | `PERSISTED_STATE` |
 
-## Links
+> **No new action is not the same as no existing concern.**
 
-- **Live application:** [https://aazhi-final.vercel.app/](https://aazhi-final.vercel.app/)
-- **GitHub repository:** [https://github.com/RPK2103/aazhi](https://github.com/RPK2103/aazhi)
+The latest event is not automatically the reason for attention. Attention may derive from a relevant processing trace or from persisted posture when no later material trace exists. The projection does not invent a missing explanation. Classification and sorting are deterministic. Gemini does not rank trips. The Coordinator View does not fetch marine context and does not mutate state.
+
+---
+
+## Product surfaces
+
+### Contextual assessment
+
+<p align="center">
+  <img src="docs/assets/02-contextual-assessment.png" alt="AAZHI contextual pre-departure assessment with observation, trip context, and marine readings" width="900" />
+</p>
+
+Observation, voice and image input, coastal marine reference location, trip context, and pre-departure contextual assessment — the intake path into concern confirmation and trip recording.
+
+### Active trip workspace
+
+<p align="center">
+  <img src="docs/assets/03-active-trip-workspace.png" alt="AAZHI active trip workspace with persistent risk state, posture, and manual marine check" width="900" />
+</p>
+
+Current posture, active concerns, state version, recorded risk state, latest manual check, material deltas, bounded policy action, grounded interpretation when invoked, and manual marine-update workflow.
+
+### Coordinator attention
+
+<p align="center">
+  <img src="docs/assets/04-coordinator-view.png" alt="AAZHI coordinator attention view with deterministic attention groups and basis" width="900" />
+</p>
+
+Attention groups, attention basis, active concerns, and deterministic trip ordering — read projection without AI ranking or marine-provider calls.
+
+---
+
+## Engineering quality
+
+| Engineering signal | Verified result |
+| --- | ---: |
+| Vitest tests | **532 passed** |
+| Vitest test files | **45 passed** |
+| Playwright product-contract executions | **36 passed** |
+| Line coverage | **91.38%** |
+| Statement coverage | **91.36%** |
+| Function coverage | **92.75%** |
+| Branch coverage | **78.49%** |
+| High/critical production dependency findings | **0** |
+| Moderate production dependency findings | **5** |
+
+Prisma generation and validation · application and E2E typechecking · lint verification · production build · clean-install verification · GitHub Actions Release Gate · desktop and mobile product-contract coverage · reduced-motion and fallback paths · security-header checks · keyboard-flow checks
+
+No high or critical production dependency vulnerabilities were reported during the final release audit. Five moderate transitive or tooling-related findings remain.
+
+> Automated evaluation measures conformance to the implemented deterministic, persistence, UI-contract, and AI-boundary workflows. It does not measure real-world maritime safety outcomes.
+
+---
+
+## Technology architecture
+
+| Layer | Stack |
+| --- | --- |
+| **Product experience** | Next.js 16 App Router, React, TypeScript, Motion, React Three Fiber, Three.js, custom marine design system |
+| **AI and interpretation** | Gemini (`gemini-3.1-flash-lite`), Google GenAI, Zod structured validation, curated `RiskConcept` retrieval, grounding provenance validation |
+| **Risk intelligence** | Bounded domain vocabulary, Risk Delta Engine, reassessment gate, deterministic operational policy, event-processing orchestrator, coordinator attention projection |
+| **State and infrastructure** | PostgreSQL, Neon, Prisma 7.8.0, Vercel |
+| **Quality and release** | Vitest, Playwright, GitHub Actions, Node 22.x |
+
+---
+
+## AI accelerated the build. Deterministic boundaries control the product.
+
+**Gemini** is a runtime product component for multimodal pre-departure interpretation, constrained contextual risk explanation, and structured grounded output.
+
+**Antigravity** supported the engineering workflow through repository exploration, multi-file implementation, architecture iteration, debugging, rapid validation cycles, and hackathon execution.
+
+AI-assisted development accelerated execution, but architectural authority remained explicit. Inside AAZHI, AI is deliberately prevented from owning policy, state transitions, risk scoring, or coordinator ranking.
+
+---
+
+## Responsible product boundary
+
+| AAZHI currently provides | AAZHI does not claim |
+| --- | --- |
+| Synthetic operational-risk workflows | Maritime clearance |
+| Manual marine-context reassessment | Continuous monitoring |
+| Persistent trip risk state | GPS or AIS tracking |
+| Bounded operational policy | Seaworthiness certification |
+| Grounded contextual explanation | Accident prediction |
+| Coordinator attention projection | Field-validated safety outcomes |
+
+AAZHI is currently suitable for synthetic public demonstration and engineering evaluation. Real operational deployment would require authentication, tenancy, ownership enforcement, abuse protection, field validation, and controlled integration with maritime stakeholders.
+
+---
+
+## What needs to be validated with operators
+
+- Fisher and boat-operator workflow interviews
+- Cooperative/coordinator workflow fit
+- Concern vocabulary and status-transition fit
+- Reassessment sensitivity calibration
+- Marine data-provider suitability
+- Low-connectivity and local-language usability
+- Authentication, ownership, and tenancy requirements
+- Controlled pilot design
+
+---
+
+## Closing
+
+AAZHI demonstrates an Applied AI architecture in which language intelligence is useful but bounded: deterministic systems retain authority over operational state, action, and attention, while Gemini explains validated context.
+
+**Top 10 · Prompt Wars Bengaluru 2026 · Solo in-person build**
+
+**Kaviyashre Ragupathy**
+
+[Live synthetic demo](https://aazhi-final.vercel.app/) · [Coordinator view](https://aazhi-final.vercel.app/coordinator) · [GitHub repository](https://github.com/RPK2103/aazhi)
+
+Marine forecast values are retrieved from the [Open-Meteo Marine Weather API](https://open-meteo.com/en/docs/marine-weather-api).
+
+---
+
+<details>
+<summary>Complete risk-domain vocabulary</summary>
+
+**RiskConcept:** `ENGINE_RELIABILITY`, `HULL_INTEGRITY`, `VESSEL_STABILITY`, `PRIMARY_COMMUNICATION`, `COMMUNICATION_REDUNDANCY`, `SAFETY_EQUIPMENT`, `WAVE_CONDITIONS`, `WIND_CONDITIONS`, `OFFICIAL_ALERT`, `TRIP_DURATION`, `CHECK_IN_STATUS`
+
+**RiskPosture:** `BASELINE`, `CAUTION`, `REASSESSMENT_REQUIRED`, `COORDINATOR_REVIEW_REQUIRED`, `OFFICIAL_ALERT_PRIORITY`
+
+**OperationalAction:** `NO_ACTION_REQUIRED`, `REASSESSMENT_REQUIRED`, `COORDINATOR_REVIEW_REQUIRED`, `OFFICIAL_ALERT_PRIORITY`
+
+**ConcernStatus:** `OPEN`, `RESOLUTION_REPORTED`, `RESOLVED`, `DISMISSED`
+
+**ReassessmentReason:** `NO_MATERIAL_CHANGE`, `MATERIAL_ENVIRONMENTAL_CHANGE`, `MATERIAL_ENVIRONMENTAL_CHANGE_WITH_ACTIVE_CONCERN`, `CONCERN_STATE_CHANGED`, `OFFICIAL_ALERT_CHANGED`
+
+**InterpretationStatus:** `SKIPPED`, `SUCCEEDED`, `FAILED`
+
+</details>
+
+<details>
+<summary>API and persistence model reference</summary>
+
+| Method | Route |
+| --- | --- |
+| `POST` | `/api/assess` |
+| `POST` | `/api/risk/trips/start` |
+| `GET` | `/api/risk/trips/[tripId]` |
+| `POST` | `/api/risk/trips/[tripId]/refresh-marine` |
+| `GET` | `/api/risk/coordinator/attention` |
+
+Schema: `prisma/schema.prisma` · Persistence notes: `docs/persistence/README.md`
+
+</details>
+
+<details>
+<summary>Interpretation failure states and idempotency details</summary>
+
+**Failure stages:** `INTERPRETER_PROVIDER`, `INTERPRETER_PARSE`, `INTERPRETER_ZOD_VALIDATION`, `INTERPRETER_GROUNDING_VALIDATION`, `UNKNOWN`
+
+**Failure reasons:** `PROVIDER_FAILURE`, `INVALID_INTERPRETATION_OUTPUT`, `GROUNDING_PROVENANCE_FAILURE`, `UNKNOWN_INTERPRETER_FAILURE`
+
+**Idempotency:** Duplicate `MARINE_STATE_UPDATED` events match prior `RISK_EVENT_PROCESSED` timeline entries by `sourceEventId` and return the reconstructed result without reprocessing.
+
+**Grounding validation:** Each `groundingSources` entry must match retrieved record `recordId`, `authority`, `documentTitle`, `sourceLocator`, and `sourceUrl`.
+
+</details>
+
+<details>
+<summary>Release and evaluation scope</summary>
+
+CI workflow `.github/workflows/release-gate.yml` runs `verify:release` and `audit:prod` on `main` and pull requests.
+
+Deterministic scenario harness: S001–S015 in `src/evals/scenarios/`. Golden scenario documentation: `docs/evaluations/S003-unresolved-engine-worsening-marine-conditions.md`.
+
+Playwright product-contract tests intercept API responses — they do not prove browser-to-live-Neon, Gemini, or Open-Meteo integration.
+
+</details>
