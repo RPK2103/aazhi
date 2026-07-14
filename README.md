@@ -13,15 +13,26 @@
 </p>
 
 <p align="center">
-  <a href="https://aazhi-final.vercel.app/">Live synthetic demo</a>
-  ·
-  <a href="https://github.com/RPK2103/aazhi">Repository</a>
-  ·
+  <a href="https://aazhi-final.vercel.app/">Live synthetic demo</a></br></br>
   <a href="https://github.com/RPK2103/aazhi/actions/workflows/release-gate.yml"><img src="https://github.com/RPK2103/aazhi/actions/workflows/release-gate.yml/badge.svg?branch=main" alt="Release Gate" /></a>
 </p>
 
 > **Forecasts describe the environment. AAZHI maintains the operational risk state of a trip and explains when that state materially changes.**
+<p align="center">
+  <a href="https://aazhi-final.vercel.app/">
+    <img
+      src="./docs/assets/readme/aazhi-demo.gif"
+      alt="AAZHI product workflow showing contextual assessment, persistent active-trip risk state, marine reassessment, and coordinator attention"
+      width="100%"
+    />
+  </a>
+</p>
 
+<p align="center">
+  <em>
+    From contextual assessment to persistent trip risk state and coordinator attention.
+  </em>
+</p>
 ---
 
 ## Product visual
