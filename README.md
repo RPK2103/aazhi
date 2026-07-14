@@ -27,7 +27,7 @@
 ## Product visual
 
 <p align="center">
-  <img src="docs/assets/01-aazhi-hero.png" alt="AAZHI marine assessment and operational risk-state interface" width="900" />
+  <img src="docs/assets/readme/01-aazhi-hero.png" alt="AAZHI marine assessment and operational risk-state interface" width="900" />
 </p>
 
 ---
@@ -355,7 +355,7 @@ The latest event is not automatically the reason for attention. Attention may de
 ### Contextual assessment
 
 <p align="center">
-  <img src="docs/assets/02-contextual-assessment.png" alt="AAZHI contextual pre-departure assessment with observation, trip context, and marine readings" width="900" />
+  <img src="docs/assets/readme/02-contextual-assessment.png" alt="AAZHI contextual pre-departure assessment with observation, trip context, and marine readings" width="900" />
 </p>
 
 Observation, voice and image input, coastal marine reference location, trip context, and pre-departure contextual assessment — the intake path into concern confirmation and trip recording.
@@ -363,7 +363,7 @@ Observation, voice and image input, coastal marine reference location, trip cont
 ### Active trip workspace
 
 <p align="center">
-  <img src="docs/assets/03-active-trip-workspace.png" alt="AAZHI active trip workspace with persistent risk state, posture, and manual marine check" width="900" />
+  <img src="docs/assets/readme/03-active-trip-workspace.png" alt="AAZHI active trip workspace with persistent risk state, posture, and manual marine check" width="900" />
 </p>
 
 Current posture, active concerns, state version, recorded risk state, latest manual check, material deltas, bounded policy action, grounded interpretation when invoked, and manual marine-update workflow.
@@ -371,7 +371,7 @@ Current posture, active concerns, state version, recorded risk state, latest man
 ### Coordinator attention
 
 <p align="center">
-  <img src="docs/assets/04-coordinator-view.png" alt="AAZHI coordinator attention view with deterministic attention groups and basis" width="900" />
+  <img src="docs/assets/readme/04-coordinator-view.png" alt="AAZHI coordinator attention view with deterministic attention groups and basis" width="900" />
 </p>
 
 Attention groups, attention basis, active concerns, and deterministic trip ordering — read projection without AI ranking or marine-provider calls.
