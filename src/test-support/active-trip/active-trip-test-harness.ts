@@ -60,7 +60,6 @@ export function createTestActiveTripHarness(options?: {
   const repos = createInMemoryPersistenceRepositories();
   const vesselRiskRecord = new VesselRiskRecordService(repos);
   const ids: string[] = [];
-  let idCounter = 0;
   const now = options?.now ?? DEFAULT_NOW;
   const marineSequence = options?.marineSequence ?? [S003_INITIAL_MARINE, S003_REFRESH_MARINE];
   let marineFetchCount = 0;
@@ -82,8 +81,7 @@ export function createTestActiveTripHarness(options?: {
       return marineSequence[Math.min(marineFetchCount - 1, marineSequence.length - 1)]!;
     },
     createId: () => {
-      idCounter += 1;
-      const id = `test-id-${idCounter}`;
+      const id = crypto.randomUUID();
       ids.push(id);
       return id;
     },

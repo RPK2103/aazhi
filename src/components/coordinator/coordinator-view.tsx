@@ -206,14 +206,24 @@ export function CoordinatorView({ workflow }: Props) {
           className="coordinator-view__refresh"
           onClick={() => void refresh()}
           disabled={isLoading}
+          aria-busy={isLoading}
+          aria-label="Refresh coordinator attention view"
         >
           REFRESH VIEW
         </button>
         <p className="coordinator-view__refresh-copy">{REFRESH_VIEW_COPY}</p>
       </div>
 
-      {error ? <p className="coordinator-view__error">{error}</p> : null}
-      {isLoading && !data ? <p className="coordinator-view__loading">Loading coordinator view…</p> : null}
+      {error ? (
+        <p className="coordinator-view__error" role="alert">
+          {error}
+        </p>
+      ) : null}
+      {isLoading && !data ? (
+        <p className="coordinator-view__loading" role="status" aria-live="polite">
+          Loading coordinator view…
+        </p>
+      ) : null}
 
       {data ? (
         <motion.div

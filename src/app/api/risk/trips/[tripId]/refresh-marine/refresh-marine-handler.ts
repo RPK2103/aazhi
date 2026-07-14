@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ZodError } from "zod";
 import {
   ActiveTripService,
   ActiveTripNotFoundError,
@@ -16,6 +17,16 @@ export function createRefreshMarineHandler(service: ActiveTripService) {
       const result = await service.refreshMarine(params.tripId);
       return NextResponse.json(result);
     } catch (error) {
+      if (error instanceof ZodError) {
+        return NextResponse.json(
+          {
+            error: "INVALID_TRIP_ID",
+            message: "Trip identifier is invalid.",
+          },
+          { status: 400 },
+        );
+      }
+
       if (error instanceof ActiveTripNotFoundError) {
         return NextResponse.json(
           { error: "TRIP_NOT_FOUND", message: "Active trip was not found." },

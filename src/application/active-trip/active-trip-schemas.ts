@@ -53,7 +53,7 @@ export const startTripRequestSchema = z
   });
 
 export const tripIdParamSchema = z.object({
-  tripId: z.string().min(1),
+  tripId: z.string().uuid(),
 });
 
 export type StartTripRequestBody = z.infer<typeof startTripRequestSchema>;

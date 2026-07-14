@@ -7,6 +7,8 @@ import {
   MAX_AUDIO_BYTES,
   MAX_IMAGE_BYTES,
   normalizeMimeType,
+  parseContentLengthHeader,
+  validateAssessmentFormData,
   validateUploadMetadata,
 } from "@/lib/validation";
 
@@ -238,5 +240,82 @@ describe("field observation requirement", () => {
     expect(
       hasFieldObservation({ typedObservation: "", hasAudio: false }),
     ).toBe(false);
+  });
+});
+
+describe("validateAssessmentFormData", () => {
+  function validFormData() {
+    const formData = new FormData();
+    formData.set("location", "chennai-kasimedu");
+    formData.set("boatType", "Small fibre boat");
+    formData.set("crewCount", "5");
+    formData.set("tripDuration", "8");
+    formData.set("language", "English");
+    formData.set("typedObservation", "Sea looks rough.");
+    return formData;
+  }
+
+  it("accepts allowed scalar and file keys", () => {
+    const formData = validFormData();
+    formData.set("image", new File(["x"], "sea.png", { type: "image/png" }));
+    expect(validateAssessmentFormData(formData).valid).toBe(true);
+  });
+
+  it("rejects unknown keys", () => {
+    const formData = validFormData();
+    formData.set("policy", "COORDINATOR_REVIEW_REQUIRED");
+    expect(validateAssessmentFormData(formData)).toEqual({
+      valid: false,
+      reason: "unknown-key",
+    });
+  });
+
+  it("rejects duplicate crewCount", () => {
+    const formData = validFormData();
+    formData.append("crewCount", "6");
+    expect(validateAssessmentFormData(formData)).toEqual({
+      valid: false,
+      reason: "duplicate-field",
+    });
+  });
+
+  it("rejects duplicate tripDuration", () => {
+    const formData = validFormData();
+    formData.append("tripDuration", "10");
+    expect(validateAssessmentFormData(formData)).toEqual({
+      valid: false,
+      reason: "duplicate-field",
+    });
+  });
+
+  it("rejects multiple image fields", () => {
+    const formData = validFormData();
+    formData.append("image", new File(["a"], "a.png", { type: "image/png" }));
+    formData.append("image", new File(["b"], "b.png", { type: "image/png" }));
+    expect(validateAssessmentFormData(formData)).toEqual({
+      valid: false,
+      reason: "duplicate-field",
+    });
+  });
+
+  it("rejects multiple audio fields", () => {
+    const formData = validFormData();
+    formData.append("audio", new File(["a"], "a.webm", { type: "audio/webm" }));
+    formData.append("audio", new File(["b"], "b.webm", { type: "audio/webm" }));
+    expect(validateAssessmentFormData(formData)).toEqual({
+      valid: false,
+      reason: "duplicate-field",
+    });
+  });
+});
+
+describe("parseContentLengthHeader", () => {
+  it("parses a valid content length", () => {
+    expect(parseContentLengthHeader("1024")).toBe(1024);
+  });
+
+  it("returns null for missing or invalid content length", () => {
+    expect(parseContentLengthHeader(null)).toBeNull();
+    expect(parseContentLengthHeader("not-a-number")).toBeNull();
   });
 });

@@ -269,7 +269,10 @@ describe("policy isolation from grounding", () => {
       deltas,
       S003_ENGINE_WAVE_DETERIORATION.currentState.activeConcerns,
     );
-    const policy = deriveOperationalPolicyDecision(reassessment);
+    const policy = deriveOperationalPolicyDecision(
+      reassessment,
+      "2026-07-12T10:00:00.000Z",
+    );
     expect(policy).not.toHaveProperty("groundingSources");
   });
 
@@ -282,7 +285,10 @@ describe("policy isolation from grounding", () => {
       deltas,
       S003_ENGINE_WAVE_DETERIORATION.currentState.activeConcerns,
     );
-    const policy = deriveOperationalPolicyDecision(reassessment);
+    const policy = deriveOperationalPolicyDecision(
+      reassessment,
+      "2026-07-12T10:00:00.000Z",
+    );
     expect(JSON.stringify(policy)).not.toContain("interactionSummary");
   });
 });

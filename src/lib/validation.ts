@@ -71,6 +71,85 @@ export const AUDIO_MIME_TYPES = [
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 export const MAX_AUDIO_BYTES = 8 * 1024 * 1024;
 
+/** Maximum total multipart body before parsing when Content-Length is present. */
+export const MAX_ASSESSMENT_MULTIPART_BYTES =
+  MAX_IMAGE_BYTES + MAX_AUDIO_BYTES + 64 * 1024;
+
+export const ASSESSMENT_FORM_SCALAR_KEYS = [
+  "location",
+  "boatType",
+  "crewCount",
+  "tripDuration",
+  "language",
+  "typedObservation",
+] as const;
+
+export const ASSESSMENT_FORM_FILE_KEYS = ["image", "audio"] as const;
+
+export const ASSESSMENT_FORM_ALLOWED_KEYS = [
+  ...ASSESSMENT_FORM_SCALAR_KEYS,
+  ...ASSESSMENT_FORM_FILE_KEYS,
+] as const;
+
+export type AssessmentFormScalarKey =
+  (typeof ASSESSMENT_FORM_SCALAR_KEYS)[number];
+export type AssessmentFormFileKey = (typeof ASSESSMENT_FORM_FILE_KEYS)[number];
+
+const SCALAR_KEYS_SET = new Set<string>(ASSESSMENT_FORM_SCALAR_KEYS);
+const FILE_KEYS_SET = new Set<string>(ASSESSMENT_FORM_FILE_KEYS);
+const ALLOWED_KEYS_SET = new Set<string>(ASSESSMENT_FORM_ALLOWED_KEYS);
+
+export type AssessmentFormValidationResult =
+  | {
+      valid: true;
+      scalars: Record<AssessmentFormScalarKey, FormDataEntryValue | null>;
+      files: Record<AssessmentFormFileKey, FormDataEntryValue | null>;
+    }
+  | { valid: false; reason: "unknown-key" | "duplicate-field" };
+
+export function validateAssessmentFormData(formData: FormData): AssessmentFormValidationResult {
+  const scalars = {} as Record<
+    AssessmentFormScalarKey,
+    FormDataEntryValue | null
+  >;
+  for (const key of ASSESSMENT_FORM_SCALAR_KEYS) {
+    scalars[key] = null;
+  }
+
+  const files = {} as Record<AssessmentFormFileKey, FormDataEntryValue | null>;
+  for (const key of ASSESSMENT_FORM_FILE_KEYS) {
+    files[key] = null;
+  }
+
+  for (const key of formData.keys()) {
+    if (!ALLOWED_KEYS_SET.has(key)) {
+      return { valid: false, reason: "unknown-key" };
+    }
+
+    const values = formData.getAll(key);
+    if (values.length > 1) {
+      return { valid: false, reason: "duplicate-field" };
+    }
+
+    const value = values[0] ?? null;
+    if (SCALAR_KEYS_SET.has(key)) {
+      scalars[key as AssessmentFormScalarKey] = value;
+    } else if (FILE_KEYS_SET.has(key)) {
+      files[key as AssessmentFormFileKey] = value;
+    }
+  }
+
+  return { valid: true, scalars, files };
+}
+
+export function parseContentLengthHeader(
+  contentLength: string | null,
+): number | null {
+  if (!contentLength) return null;
+  const parsed = Number.parseInt(contentLength, 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
 export type UploadKind = "audio" | "image";
 
 export function normalizeMimeType(mimeType: string) {

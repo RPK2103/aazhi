@@ -255,6 +255,7 @@ export function ObservationPanel({ workflow }: Props) {
           className="workspace-primary-button"
           type="submit"
           disabled={isLoading}
+          aria-busy={isLoading}
         >
           {isLoading
             ? "RECONCILING FIELD AND MARINE CONTEXT…"

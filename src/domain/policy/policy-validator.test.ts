@@ -14,7 +14,9 @@ function makePolicyDecision(
           ? "MATERIAL_ENVIRONMENTAL_CHANGE_WITH_ACTIVE_CONCERN"
           : action === "OFFICIAL_ALERT_PRIORITY"
             ? "OFFICIAL_ALERT_CHANGED"
-            : "REASSESSMENT_REQUIRED",
+          : action === "REASSESSMENT_REQUIRED"
+            ? "MATERIAL_ENVIRONMENTAL_CHANGE"
+            : "CONCERN_STATE_CHANGED",
     triggerConcepts: [],
     derivedAt: "2026-07-12T10:00:00.000Z",
   };

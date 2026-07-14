@@ -2,16 +2,25 @@
   "name": "aazhi",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.12.0 <23"
+  },
   "scripts": {
     "postinstall": "prisma generate",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:run": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "verify": "npm run prisma:generate && npm run prisma:validate && npm run typecheck && npm run lint && npm run test:coverage && npm run build",
+    "verify:release": "npm run verify && npm run test:e2e",
+    "audit:prod": "npm audit --omit=dev --audit-level=high",
     "prisma:validate": "prisma validate",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev"
@@ -42,6 +51,7 @@
     "prisma": "^7.8.0",
     "tailwindcss": "latest",
     "typescript": "latest",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "@playwright/test": "^1.52.0"
   }
 }

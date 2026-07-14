@@ -524,7 +524,12 @@ export function FisherIntake() {
                 </p>
               )}
             </div>
-            <button className="primary-button" type="submit" disabled={isLoading}>
+            <button
+              className="primary-button"
+              type="submit"
+              disabled={isLoading}
+              aria-busy={isLoading}
+            >
               {isLoading
                 ? "RECONCILING FIELD AND MARINE CONTEXT…"
                 : "ASSESS DEPARTURE READINESS"}
