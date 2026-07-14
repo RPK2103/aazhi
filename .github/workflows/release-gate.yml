@@ -26,9 +26,6 @@ jobs:
         run: npm run verify:release
         env:
           CI: true
-          GEMINI_API_KEY: placeholder-not-used-in-tests
-          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
-          DIRECT_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
 
       - name: Production dependency audit
         run: npm run audit:prod
