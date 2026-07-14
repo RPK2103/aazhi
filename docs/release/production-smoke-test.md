@@ -29,6 +29,22 @@ Security wording for reports:
 
 **Mocked-browser tests do not prove browser-to-real-database behaviour.**
 
+Automated tests use in-memory persistence and mocked provider responses. **No real Neon connection occurs during automated tests.**
+
+---
+
+## Prisma and environment variables
+
+| Command | Requires `DIRECT_URL` | Requires `DATABASE_URL` | Notes |
+|---------|----------------------|-------------------------|-------|
+| `prisma generate` | No | No | Must succeed during `npm ci` / CI without production secrets |
+| `prisma validate` | No | No | Schema-only validation |
+| `prisma migrate deploy` | **Yes** | No | Run manually against Neon before/at deploy time |
+| Runtime application | No | **Yes** | Pooled Neon connection for live API routes |
+
+- `prisma.config.ts` loads optional `.env` via `dotenv/config` but does not require `DIRECT_URL` for generate/validate.
+- Do not commit real database credentials. No fallback production database URL is embedded in source control.
+
 ---
 
 ## Manual production smoke test (deployed Vercel + real providers)
@@ -112,7 +128,7 @@ Pop-Location
 git worktree remove ..\aazhi-clean-verify
 ```
 
-Expected Node for clean-checkout verification: **22.12.0** (see `.nvmrc`). Local runtimes on other 22.x patch versions satisfy `package.json` engines but are not exact-runtime verification.
+Expected Node for clean-checkout verification: **22.19.0** (see `.nvmrc`). Vercel deployments should use **Node 22.x**. `package.json` engines require `>=22.13.0 <23`.
 
 Retain the worktree and Playwright artifacts if the gate fails.
 
